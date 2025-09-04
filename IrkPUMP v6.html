@@ -1792,6 +1792,12 @@
             const workingFlow = designParams.downhole_q_m3;
             const workingHead = designParams.tdh_m;
 
+            // Resolve CSS variable colors for canvas (Chart.js can't use var(--*) directly)
+            const cssVars = getComputedStyle(document.documentElement);
+            const colorOptimalZone = (cssVars.getPropertyValue('--optimal-zone') || 'rgba(46, 125, 50, 0.2)').trim();
+            const colorCavitationZone = (cssVars.getPropertyValue('--cavitation-zone') || 'rgba(213, 0, 0, 0.1)').trim();
+            const colorErosionZone = (cssVars.getPropertyValue('--erosion-zone') || 'rgba(156, 39, 176, 0.1)').trim();
+
             chartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
@@ -1855,7 +1861,7 @@
                                     xMax: optimalMax,
                                     yMin: 0,
                                     yMax: Math.max(...heads) * 1.1,
-                                    backgroundColor: 'var(--optimal-zone)',
+                                    backgroundColor: colorOptimalZone,
                                     borderColor: 'rgba(40, 167, 69, 0.5)',
                                     borderWidth: 1,
                                     label: {
@@ -1873,7 +1879,7 @@
                                     xMax: cavitationMax,
                                     yMin: 0,
                                     yMax: Math.max(...heads) * 1.1,
-                                    backgroundColor: 'var(--cavitation-zone)',
+                                    backgroundColor: colorCavitationZone,
                                     borderColor: 'rgba(220, 53, 69, 0.3)',
                                     borderWidth: 1,
                                     label: {
@@ -1891,7 +1897,7 @@
                                     xMax: erosionMax,
                                     yMin: 0,
                                     yMax: Math.max(...heads) * 1.1,
-                                    backgroundColor: 'var(--erosion-zone)',
+                                    backgroundColor: colorErosionZone,
                                     borderColor: 'rgba(156, 39, 176, 0.3)',
                                     borderWidth: 1,
                                     label: {
