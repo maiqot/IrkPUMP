@@ -1,0 +1,40 @@
+{
+  "name": "irkpump",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder --mac"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/maiqot/IrkPUMP.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/maiqot/IrkPUMP/issues"
+  },
+  "homepage": "https://github.com/maiqot/IrkPUMP#readme",
+  "devDependencies": {
+    "electron": "^38.0.0",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.example.irkpump",
+    "productName": "IrkPUMP",
+    "files": [
+      "**/*",
+      "!node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
+      "!**/*.{o,hprof,orig,pyc,pyo,rbc}",
+      "!**/{.git,.hg,.svn,CVS,RCS,SCCS,._*,.gitignore,.gitattributes,.editorconfig,.DS_Store,Thumbs.db}",
+      "!**/{.eslintignore,.eslintrc,tsconfig.json,tslint.json}",
+      "!**/npm-debug.log",
+      "!**/yarn.lock"
+    ]
+  }
+}
