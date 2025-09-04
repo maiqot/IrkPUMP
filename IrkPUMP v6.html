@@ -1,0 +1,2225 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Инженерный калькулятор ЭЦН (v4.0)</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root {
+            /* Основные цвета */
+            --primary-color: #1976d2; /* Индийская синева */
+            --primary-light: #63a4ff;
+            --primary-dark: #004ba0;
+            --secondary-color: #424242; /* Серый */
+            --accent-color: #00c853; /* Зеленый */
+            --warning-color: #ffab00; /* Оранжевый */
+            --danger-color: #d50000; /* Красный */
+            --success-color: #2e7d32; /* Темно-зеленый */
+            /* Фон и текст */
+            --bg-color: #f5f7fa;
+            --module-bg: #ffffff;
+            --card-bg: #ffffff;
+            --border-color: #e0e0e0;
+            --text-color: #212121;
+            --text-secondary: #757575;
+            /* Результаты */
+            --result-bg: #e3f2fd;
+            --result-border: #bbdefb;
+            /* Графики */
+            --optimal-zone: rgba(46, 125, 50, 0.2); /* success-color */
+            --cavitation-zone: rgba(213, 0, 0, 0.1); /* danger-color */
+            /* Тема по умолчанию - светлая */
+            --input-bg: #ffffff;
+            --input-border: #ccc;
+            --button-text: #ffffff;
+            --shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            /* Новые цвета для индикаторов */
+            --info-color: #2196f3; /* Синий */
+            --erosion-zone: rgba(156, 39, 176, 0.1); /* Фиолетовый */
+        }
+        .dark-theme {
+            --primary-color: #90caf9;
+            --primary-light: #c3fdff;
+            --primary-dark: #5d99c6;
+            --secondary-color: #bdbdbd;
+            --accent-color: #69f0ae;
+            --warning-color: #ffd740;
+            --danger-color: #ff5252;
+            --success-color: #66bb6a;
+            --bg-color: #121212;
+            --module-bg: #1e1e1e;
+            --card-bg: #252525;
+            --border-color: #444;
+            --text-color: #e0e0e0;
+            --text-secondary: #9e9e9e;
+            --result-bg: #1a237e; /* Темно-синий */
+            --result-border: #303f9f;
+            --input-bg: #333;
+            --input-border: #555;
+            --button-text: #ffffff;
+            --shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            /* Темные цвета для индикаторов */
+            --info-color: #4fc3f7; /* Светло-синий */
+            --erosion-zone: rgba(171, 71, 188, 0.15); /* Светлее фиолетовый */
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .app-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: var(--module-bg);
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        header {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+        h1 {
+            margin: 0;
+            font-size: 1.8rem;
+        }
+        h2 {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 8px;
+            margin: 30px 0 20px 0;
+            font-size: 1.5rem;
+        }
+        h3 {
+            color: var(--text-color);
+            margin-top: 25px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            cursor: pointer; /* Указываем, что можно свернуть */
+        }
+        h3 .toggle-icon {
+            margin-right: 10px;
+            transition: transform 0.3s ease;
+        }
+        h3.collapsed .toggle-icon {
+            transform: rotate(-90deg);
+        }
+        h4 {
+            color: var(--text-secondary);
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 30px;
+            padding: 20px;
+        }
+        @media (max-width: 1100px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+        /* --- Модули --- */
+        .module {
+            background-color: var(--card-bg);
+            padding: 25px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: var(--text-color);
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            box-sizing: border-box;
+            border: 1px solid var(--input-border);
+            border-radius: 4px;
+            font-size: 1rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            background-color: var(--input-bg);
+            color: var(--text-color);
+        }
+        input:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
+        }
+        input.error {
+            border: 1px solid var(--danger-color);
+        }
+        /* --- Кнопки --- */
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 12px 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            background-color: var(--primary-color);
+            color: var(--button-text);
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.2s, transform 0.1s;
+            flex: 1;
+            min-width: 150px;
+        }
+        button:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .btn-secondary {
+            background-color: var(--secondary-color);
+        }
+        .btn-secondary:hover {
+            background-color: #212121;
+        }
+        .btn-export {
+            background-color: #607d8b; /* Сине-серый */
+        }
+        .btn-export:hover {
+            background-color: #455a64;
+        }
+        .theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 8px 15px;
+            font-size: 0.9rem;
+            font-weight: normal;
+            background-color: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .theme-toggle:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+        .theme-toggle i {
+            margin-right: 5px;
+        }
+        /* --- Вкладки --- */
+        .tabs {
+            display: flex;
+            background-color: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0 20px;
+        }
+        .tab {
+            padding: 15px 25px;
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--text-secondary);
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+        .tab:hover {
+            color: var(--primary-color);
+            background-color: rgba(25, 118, 210, 0.05);
+        }
+        .tab.active {
+            color: var(--primary-color);
+            border-bottom: 3px solid var(--primary-color);
+        }
+        .tab-content {
+            display: none;
+            padding: 20px;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        /* --- Результаты --- */
+        .result-container {
+            margin-top: 15px;
+            padding: 20px;
+            background-color: var(--result-bg);
+            border: 1px solid var(--result-border);
+            border-radius: 5px;
+            font-size: 0.95rem;
+        }
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .result-card {
+            background-color: var(--module-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+        }
+        .result-card h4 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+        }
+        .result-card h4 i {
+            margin-right: 8px;
+        }
+        .result-value {
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-top: auto; /* Прижимает значение вниз */
+        }
+        .success-text {
+            color: var(--success-color);
+        }
+        .warning-text {
+            color: var(--warning-color);
+        }
+        .error-text {
+            color: var(--danger-color);
+        }
+        .info-text {
+            color: var(--info-color);
+        }
+
+        /* --- Индикаторы --- */
+        .indicator-bar {
+            width: 100%;
+            height: 10px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        .dark-theme .indicator-bar {
+            background-color: #444;
+        }
+        .indicator-fill {
+            height: 100%;
+            border-radius: 5px;
+        }
+        .indicator-fill.success { background-color: var(--success-color); }
+        .indicator-fill.warning { background-color: var(--warning-color); }
+        .indicator-fill.danger { background-color: var(--danger-color); }
+        .indicator-fill.info { background-color: var(--info-color); }
+
+        /* --- Статусные иконки --- */
+        .status-icon {
+            margin-right: 8px;
+        }
+
+        /* --- Сворачиваемые блоки --- */
+        .collapsible-content {
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+            opacity: 1;
+        }
+        .collapsible-content.collapsed {
+            max-height: 0 !important;
+            opacity: 0;
+        }
+
+        /* --- Таблица подбора насосов --- */
+        .pump-table-container {
+            overflow-x: auto;
+        }
+        .pump-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+        .pump-table th,
+        .pump-table td {
+            border: 1px solid var(--border-color);
+            padding: 12px 10px;
+            text-align: center;
+        }
+        .pump-table th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
+        }
+        .pump-table tbody tr:nth-child(even) {
+             background-color: rgba(0, 0, 0, 0.02);
+        }
+        .dark-theme .pump-table tbody tr:nth-child(even) {
+             background-color: rgba(255, 255, 255, 0.05);
+        }
+        .pump-table tbody tr:hover {
+            background-color: rgba(25, 118, 210, 0.1);
+            cursor: pointer;
+        }
+        .pump-table .selected-row {
+            background-color: rgba(25, 118, 210, 0.2) !important;
+            font-weight: bold;
+        }
+        .pump-table .optimal {
+            background-color: rgba(46, 125, 50, 0.1); /* success-color */
+        }
+        .pump-table .warning {
+            background-color: rgba(255, 171, 0, 0.1); /* warning-color */
+        }
+        .pump-table .danger {
+            background-color: rgba(213, 0, 0, 0.1); /* danger-color */
+        }
+        /* --- График --- */
+        .chart-container {
+            position: relative;
+            height: 500px;
+            margin-top: 20px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+        .chart-legend {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-top: 15px;
+            font-size: 0.85rem;
+        }
+        .legend-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 3px;
+        }
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            margin-right: 8px;
+            border: 1px solid #666;
+            border-radius: 2px;
+        }
+        /* --- Прогресс-бар --- */
+        .progress-container {
+            margin-bottom: 25px;
+        }
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            margin-bottom: 30px;
+        }
+        .progress-steps::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 0;
+            height: 4px;
+            width: 100%;
+            background-color: var(--border-color);
+            transform: translateY(-50%);
+            z-index: 1;
+        }
+        .progress-bar {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            height: 4px;
+            width: 0%;
+            background-color: var(--primary-color);
+            transform: translateY(-50%);
+            z-index: 2;
+            transition: width 0.4s ease;
+        }
+        .step {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--module-bg);
+            border: 3px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: var(--text-secondary);
+            z-index: 3;
+            position: relative;
+            transition: all 0.4s ease;
+        }
+        .step.active {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            background-color: var(--module-bg);
+        }
+        .step.completed {
+            border-color: var(--primary-color);
+            background-color: var(--primary-color);
+            color: white;
+        }
+        .step-label {
+            position: absolute;
+            top: 45px;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+        .step.active .step-label {
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+        /* --- Статус и сообщения --- */
+        .status-message {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .status-message i {
+            margin-right: 10px;
+        }
+        .status-info {
+            background-color: #e3f2fd;
+            color: #1976d2;
+            border: 1px solid #bbdefb;
+        }
+        .dark-theme .status-info {
+             background-color: #1a237e;
+             color: #90caf9;
+             border: 1px solid #303f9f;
+        }
+        /* --- Иконки --- */
+        .icon-inline {
+            margin-right: 5px;
+        }
+        /* --- Адаптивность --- */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            .module {
+                padding: 20px;
+            }
+            .btn-group {
+                flex-direction: column;
+            }
+            button {
+                width: 100%;
+            }
+            .chart-container {
+                height: 400px;
+            }
+            .result-grid {
+                grid-template-columns: 1fr;
+            }
+            .tabs {
+                padding: 0 10px;
+                overflow-x: auto;
+            }
+            .tab {
+                padding: 12px 15px;
+                white-space: nowrap;
+            }
+            .theme-toggle {
+                position: static;
+                margin-top: 10px;
+                margin-left: auto;
+                margin-right: auto;
+                display: block;
+            }
+        }
+
+        /* --- Слайдеры --- */
+        .slider-container {
+            margin-top: 10px;
+        }
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+        input[type="range"] {
+            width: 100%;
+            height: 5px;
+            border-radius: 5px;
+            background: #d3d3d3;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        .dark-theme input[type="range"] {
+            background: #555;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: pointer;
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: pointer;
+            border: none;
+        }
+
+        /* --- Ключевые выводы --- */
+        .key-findings {
+            background-color: var(--card-bg);
+            border: 2px solid var(--primary-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: var(--shadow);
+        }
+        .key-findings h2 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+            border: none;
+            font-size: 1.4rem;
+        }
+        .key-findings ul {
+            padding-left: 20px;
+            margin: 0;
+        }
+        .key-findings li {
+            margin-bottom: 10px;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h1><i class="fas fa-calculator icon-inline"></i> Инженерный калькулятор ЭЦН (Версия 4.0)</h1>
+            <button class="theme-toggle" onclick="toggleTheme()"><i class="fas fa-moon"></i> Темная тема</button>
+        </header>
+        <div class="progress-container">
+            <div class="progress-steps">
+                <div class="progress-bar" id="progressBar"></div>
+                <div class="step completed" id="step1">
+                    1
+                    <div class="step-label">Ввод данных</div>
+                </div>
+                <div class="step" id="step2">
+                    2
+                    <div class="step-label">Расчет</div>
+                </div>
+                <div class="step" id="step3">
+                    3
+                    <div class="step-label">Подбор насоса</div>
+                </div>
+                <div class="step" id="step4">
+                    4
+                    <div class="step-label">Результаты</div>
+                </div>
+            </div>
+        </div>
+        <div class="tabs">
+            <button class="tab active" onclick="openTab(event, 'design')"><i class="fas fa-cogs icon-inline"></i> Расчет</button>
+            <button class="tab" onclick="openTab(event, 'multiphase')"><i class="fas fa-wave-square icon-inline"></i> Многофазный поток</button>
+            <button class="tab" onclick="openTab(event, 'cavitation')"><i class="fas fa-exclamation-triangle icon-inline"></i> Кавитация</button>
+            <button class="tab" onclick="openTab(event, 'motor')"><i class="fas fa-bolt icon-inline"></i> Двигатель</button>
+            <!-- Новая вкладка для прогноза -->
+            <button class="tab" onclick="openTab(event, 'forecast')"><i class="fas fa-chart-line icon-inline"></i> Прогноз</button>
+        </div>
+        <div class="container">
+            <div class="input-column">
+                <div class="module">
+                    <h2>Входные данные (скв. 3306)</h2>
+                    <div class="status-message status-info" id="inputStatus">
+                        <i class="fas fa-info-circle icon-inline"></i> Заполните все поля и нажмите "ЗАПУСТИТЬ РАСЧЕТ"
+                    </div>
+                    <h4><i class="fas fa-oil-can icon-inline"></i> 1. Параметры пласта и флюида</h4>
+                    <div class="input-group">
+                        <label for="reservoirPressure">Пластовое давление (Pr), атм:</label>
+                        <input type="number" id="reservoirPressure" value="89.6" step="0.1">
+                    </div>
+                    <div class="input-group">
+                        <label for="productivityIndex">Коэфф. продуктивности (J), м³/сут/атм:</label>
+                        <input type="number" id="productivityIndex" value="2.238" step="0.001">
+                    </div>
+                    <div class="input-group">
+                        <label for="bubblePointPressure">Давление насыщения (Pb), атм:</label>
+                        <input type="number" id="bubblePointPressure" value="89.6" step="0.1">
+                    </div>
+                    <div class="input-group">
+                        <label for="gasOilRatio">Газосодержание (GOR), м³/м³:</label>
+                        <input type="number" id="gasOilRatio" value="251.7" step="0.1">
+                    </div>
+                    <div class="input-group">
+                        <label for="waterCut">Обводненность (Fw), %:</label>
+                        <input type="number" id="waterCut" value="52.7" step="0.1" min="0" max="100">
+                    </div>
+                    <div class="input-group">
+                        <label for="liquidDensity">Плотность жидкости, кг/м³:</label>
+                        <input type="number" id="liquidDensity" value="1016" step="1">
+                    </div>
+                    <div class="input-group">
+                        <label for="boFactor">Объемный коэфф. нефти (Bo):</label>
+                        <input type="number" id="boFactor" value="1.64" step="0.01">
+                    </div>
+                    <div class="input-group">
+                        <label for="viscosity">Вязкость жидкости, сПз:</label>
+                        <input type="number" id="viscosity" value="0.44" step="0.01">
+                    </div>
+                    <div class="input-group">
+                        <label for="gasSpecificGravity">Плотность газа (относит.):</label>
+                        <input type="number" id="gasSpecificGravity" value="0.85" step="0.01">
+                    </div>
+                    <h4><i class="fas fa-well icon-inline"></i> 2. Параметры скважины и эксплуатации</h4>
+                    <div class="input-group">
+                        <label for="tubingId">Внутренний диаметр НКТ, мм:</label>
+                        <input type="number" id="tubingId" value="62" step="1">
+                    </div>
+                    <div class="input-group">
+                        <label for="pumpDepth">Глубина спуска насоса (по вертикали), м:</label>
+                        <input type="number" id="pumpDepth" value="2630" step="1">
+                    </div>
+                    <div class="input-group">
+                        <label for="tubingHeadPressure">Устьевое давление, атм:</label>
+                        <input type="number" id="tubingHeadPressure" value="25" step="0.1">
+                    </div>
+                    <div class="input-group">
+                        <label for="surfaceTemperature">Температура на устье, °C:</label>
+                        <input type="number" id="surfaceTemperature" value="20" step="0.1">
+                    </div>
+                    <div class="input-group">
+                        <label for="tempGradient">Температурный градиент, °C/100 м:</label>
+                        <input type="number" id="tempGradient" value="3.0" step="0.1">
+                    </div>
+                    <div class="input-group">
+                        <label for="targetFlowRate"><b>Желаемый проектный дебит (поверхностный), м³/сут:</b></label>
+                        <input type="number" id="targetFlowRate" value="80" style="font-weight: bold;" step="1">
+                    </div>
+                    <h4><i class="fas fa-cog icon-inline"></i> 3. Коэффициенты оборудования</h4>
+                    <!-- Слайдеры для коэффициентов -->
+                    <div class="input-group">
+                        <label for="separatorEfficiency">Эффективность газосепаратора, %:</label>
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <span>0%</span>
+                                <span id="separatorEfficiencyValue">69.16%</span>
+                                <span>100%</span>
+                            </div>
+                            <input type="range" id="separatorEfficiency" min="0" max="100" step="0.1" value="69.16">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="viscCorrHead">Поправочный коэфф. на вязкость (Напор):</label>
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <span>0.5</span>
+                                <span id="viscCorrHeadValue">1.00</span>
+                                <span>1.5</span>
+                            </div>
+                            <input type="range" id="viscCorrHead" min="0.5" max="1.5" step="0.01" value="1.0">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="viscCorrEff">Поправочный коэфф. на вязкость (КПД):</label>
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <span>0.5</span>
+                                <span id="viscCorrEffValue">1.00</span>
+                                <span>1.5</span>
+                            </div>
+                            <input type="range" id="viscCorrEff" min="0.5" max="1.5" step="0.01" value="1.0">
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        <button onclick="runFullCalculation()"><i class="fas fa-play icon-inline"></i> <b>ЗАПУСТИТЬ РАСЧЕТ</b></button>
+                        <button class="btn-export" onclick="exportResults()"><i class="fas fa-file-export icon-inline"></i> <b>ЭКСПОРТИРОВАТЬ</b></button>
+                    </div>
+                </div>
+            </div>
+            <div class="output-column">
+                <div class="module">
+                    <div id="design" class="tab-content active">
+                        <h2><i class="fas fa-chart-line icon-inline"></i> Результаты расчета и графики</h2>
+                        <!-- Ключевые выводы -->
+                        <div class="key-findings" id="key_findings" style="display:none;">
+                            <h2><i class="fas fa-lightbulb icon-inline"></i> Ключевые выводы</h2>
+                            <ul id="findings_list">
+                                <!-- Выводы будут здесь -->
+                            </ul>
+                        </div>
+                        <div id="main_results_wrapper" style="display:none;">
+                            <!-- Шаг 1: Проектные параметры -->
+                            <h3 onclick="toggleCollapse(this)"><i class="fas fa-chevron-down toggle-icon"></i> <i class="fas fa-tasks icon-inline"></i> Шаг 1: Проектные параметры</h3>
+                            <div class="collapsible-content" id="section_design_result">
+                                <div class="result-container" id="design_result">
+                                    <!-- Результаты будут здесь -->
+                                </div>
+                            </div>
+
+                            <hr>
+
+                            <!-- Шаг 2: Подходящие насосы -->
+                            <h3 onclick="toggleCollapse(this)"><i class="fas fa-chevron-down toggle-icon"></i> <i class="fas fa-th-list icon-inline"></i> Шаг 2: Подходящие насосы "Борец"</h3>
+                            <div class="collapsible-content" id="section_pump_selection">
+                                <div class="pump-table-container">
+                                    <table class="pump-table" id="pump_selection_table">
+                                        <thead>
+                                            <tr>
+                                                <th>Насос</th>
+                                                <th>Q<sub>min</sub>-Q<sub>max</sub>, м³/сут</th>
+                                                <th>Напор/ступень, м</th>
+                                                <th>КПД, %</th>
+                                                <th>NPSH<sub>req</sub>, м</th>
+                                                <th>Статус</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Строки таблицы будут здесь -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="result-container" id="pump_selection_message">
+                                    <!-- Сообщения о подборе -->
+                                </div>
+                            </div>
+
+                            <hr>
+
+                            <!-- Шаг 3: Итоговый расчет -->
+                            <h3 onclick="toggleCollapse(this)"><i class="fas fa-chevron-down toggle-icon"></i> <i class="fas fa-check-circle icon-inline"></i> Шаг 3: Итоговый расчет и рабочая точка</h3>
+                            <div class="collapsible-content" id="section_staging_result">
+                                <div class="result-grid" id="staging_result_cards">
+                                    <!-- Карточки результатов будут здесь -->
+                                </div>
+                                <div class="chart-container">
+                                    <canvas id="pumpChart"></canvas>
+                                    <div class="chart-legend">
+                                        <div class="legend-group">
+                                            <div class="legend-item">
+                                                <div class="legend-color" style="background-color: var(--optimal-zone);"></div>
+                                                <span>Оптимальная зона (70-110% Q<sub>ном</sub>)</span>
+                                            </div>
+                                            <div class="legend-item">
+                                                <div class="legend-color" style="background-color: var(--cavitation-zone);"></div>
+                                                <span>Зона кавитации</span>
+                                            </div>
+                                             <div class="legend-item">
+                                                <div class="legend-color" style="background-color: var(--erosion-zone);"></div>
+                                                <span>Зона эрозии</span>
+                                            </div>
+                                        </div>
+                                        <div class="legend-group">
+                                            <div class="legend-item">
+                                                <div class="legend-color" style="background-color: rgba(54, 162, 235, 1);"></div>
+                                                <span>Напор (H), м</span>
+                                            </div>
+                                            <div class="legend-item">
+                                                <div class="legend-color" style="background-color: rgba(75, 192, 192, 1);"></div>
+                                                <span>КПД (η), %</span>
+                                            </div>
+                                            <div class="legend-item">
+                                                <div class="legend-color" style="background-color: rgba(255, 99, 132, 1); border-radius: 50%; width: 12px; height: 12px;"></div>
+                                                <span>Рабочая точка</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="multiphase" class="tab-content">
+                        <h2><i class="fas fa-water icon-inline"></i> Анализ многофазного потока (Beggs-Brill)</h2>
+                        <div class="result-container" id="multiphase_result">
+                            <!-- Результаты будут здесь -->
+                        </div>
+                    </div>
+                    <div id="cavitation" class="tab-content">
+                        <h2><i class="fas fa-exclamation-circle icon-inline"></i> Проверка на кавитацию</h2>
+                        <div class="result-container" id="cavitation_result">
+                            <!-- Результаты будут здесь -->
+                        </div>
+                    </div>
+                    <div id="motor" class="tab-content">
+                        <h2><i class="fas fa-motorcycle icon-inline"></i> Подбор двигателя и кабеля</h2>
+                        <div class="result-container" id="motor_result">
+                            <!-- Результаты будут здесь -->
+                        </div>
+                    </div>
+                    <!-- Новая вкладка для прогноза -->
+                    <div id="forecast" class="tab-content">
+                        <h2><i class="fas fa-chart-line icon-inline"></i> Прогнозирование потребности</h2>
+                        <div class="module">
+                            <h3><i class="fas fa-cogs icon-inline"></i> Параметры прогноза</h3>
+                            <div class="input-group">
+                                <label for="declineType">Тип падения добычи:</label>
+                                <select id="declineType">
+                                    <option value="exponential">Экспоненциальное</option>
+                                    <option value="hyperbolic">Гиперболическое</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label for="declineRate">Коэффициент падения (D), %/мес:</label>
+                                <input type="number" id="declineRate" value="2.0" step="0.1" min="0">
+                            </div>
+                            <div class="input-group" id="hyperbolic_n_group" style="display:none;">
+                                <label for="hyperbolicN">Параметр гиперболы (n):</label>
+                                <input type="number" id="hyperbolicN" value="0.5" step="0.01" min="0" max="1">
+                            </div>
+                            <div class="input-group">
+                                <label for="forecastPeriod">Период прогноза, месяцев:</label>
+                                <input type="number" id="forecastPeriod" value="24" step="1" min="1" max="120">
+                            </div>
+                            <button onclick="runForecast()"><i class="fas fa-play icon-inline"></i> ЗАПУСТИТЬ ПРОГНОЗ</button>
+                        </div>
+                        <div id="forecast_results_wrapper" style="display:none;">
+                            <div class="key-findings">
+                                <h3><i class="fas fa-lightbulb icon-inline"></i> Прогнозные выводы</h3>
+                                <ul id="forecast_findings_list">
+                                    <!-- Прогнозные выводы будут здесь -->
+                                </ul>
+                            </div>
+                            <h3><i class="fas fa-table icon-inline"></i> Потребность в оборудовании</h3>
+                            <div class="pump-table-container">
+                                <table class="pump-table" id="forecast_equipment_table">
+                                    <thead>
+                                        <tr>
+                                            <th>Месяц</th>
+                                            <th>Дебит, м³/сут</th>
+                                            <th>Напор, м</th>
+                                            <th>Рек. насос</th>
+                                            <th>Рек. двигатель, кВт</th>
+                                            <th>Статус</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Результаты прогноза будут здесь -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Следующая часть кода будет содержать JavaScript для новых функций -->
+    <script>
+        // --- КОНСТАНТЫ ---
+        const M3_TO_BBL = 6.2898;
+        const ATM_TO_PSI = 14.696;
+        const G = 9.81;
+        const PA_TO_ATM = 1 / 101325;
+        const FT_TO_M = 0.3048;
+        const IN_TO_M = 0.0254;
+        let chartInstance = null;
+        let lastInputs = {};
+        window.designParams = null;
+        let selectedPumpData = null;
+        let calculationResults = {}; // Для экспорта
+        let isCalculationRunning = false; // Флаг для предотвращения множественных кликов
+        let forecastResults = []; // Для хранения результатов прогноза
+
+        // --- КАТАЛОГ НАСОСОВ (расширенный) ---
+        const borets_catalog = [
+            { id: 0, name: "ЭЦНД 3-50", group: "3", nominal_q_m3: 50, min_q_m3: 25, max_q_m3: 70, head_per_stage_m: 8.2, base_eff: 0.60, npsh_req: 3.0, gas_tolerance: "Низкая" },
+            { id: 1, name: "ЭЦНД 3-80", group: "3", nominal_q_m3: 80, min_q_m3: 40, max_q_m3: 110, head_per_stage_m: 7.8, base_eff: 0.62, npsh_req: 3.5, gas_tolerance: "Низкая" },
+            { id: 2, name: "ЭЦНД 5-80", group: "5", nominal_q_m3: 80, min_q_m3: 40, max_q_m3: 110, head_per_stage_m: 7.8, base_eff: 0.62, npsh_req: 3.5, gas_tolerance: "Средняя" },
+            { id: 3, name: "ЭЦНД 5-125", group: "5", nominal_q_m3: 125, min_q_m3: 70, max_q_m3: 160, head_per_stage_m: 7.1, base_eff: 0.65, npsh_req: 4.2, gas_tolerance: "Средняя" },
+            { id: 4, name: "ЭЦНД 5А-100", group: "5А", nominal_q_m3: 100, min_q_m3: 50, max_q_m3: 130, head_per_stage_m: 7.5, base_eff: 0.68, npsh_req: 3.8, gas_tolerance: "Высокая" },
+            { id: 5, name: "ЭЦНД 5-160", group: "5", nominal_q_m3: 160, min_q_m3: 80, max_q_m3: 200, head_per_stage_m: 6.8, base_eff: 0.66, npsh_req: 5.0, gas_tolerance: "Средняя" },
+            { id: 6, name: "ЭЦНД 6-125", group: "6", nominal_q_m3: 125, min_q_m3: 60, max_q_m3: 170, head_per_stage_m: 8.0, base_eff: 0.64, npsh_req: 4.0, gas_tolerance: "Средняя" },
+            { id: 7, name: "ЭЦНД 6-200", group: "6", nominal_q_m3: 200, min_q_m3: 100, max_q_m3: 250, head_per_stage_m: 7.2, base_eff: 0.67, npsh_req: 4.8, gas_tolerance: "Средняя" },
+            { id: 8, name: "ЭЦНД 7-250", group: "7", nominal_q_m3: 250, min_q_m3: 120, max_q_m3: 320, head_per_stage_m: 6.5, base_eff: 0.65, npsh_req: 5.5, gas_tolerance: "Низкая" },
+            { id: 9, name: "ЭЦНД 8-320", group: "8", nominal_q_m3: 320, min_q_m3: 160, max_q_m3: 400, head_per_stage_m: 6.0, base_eff: 0.66, npsh_req: 6.0, gas_tolerance: "Низкая" },
+        ];
+
+        // --- ФУНКЦИИ УПРАВЛЕНИЯ ВКЛАДКАМИ, ТЕМОЙ, СВОРАЧИВАНИЕМ ---
+        function openTab(evt, tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            if (evt.currentTarget) {
+                evt.currentTarget.classList.add('active');
+            }
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            body.classList.toggle('dark-theme');
+            const button = document.querySelector('.theme-toggle');
+            const icon = button.querySelector('i');
+            if (body.classList.contains('dark-theme')) {
+                icon.className = 'fas fa-sun';
+                button.innerHTML = '<i class="fas fa-sun"></i> Светлая тема';
+            } else {
+                icon.className = 'fas fa-moon';
+                button.innerHTML = '<i class="fas fa-moon"></i> Темная тема';
+            }
+            // Перерисовать график при смене темы, если он есть
+            if (chartInstance && window.designParams && selectedPumpData) {
+                 const inputs = lastInputs;
+                 const designParams = window.designParams;
+                 const pump = selectedPumpData;
+                 const voidFraction = designParams.void_fraction;
+                 const { head: gasHeadFactor, eff: gasEffFactor } = estimateGasDegradation(voidFraction, pump.gas_tolerance);
+                 setTimeout(() => {
+                     drawPumpChart(pump, calculationResults.stages, designParams, inputs, gasHeadFactor, gasEffFactor);
+                 }, 100);
+            }
+        }
+
+        function updateProgressBar(step) {
+            const progressBar = document.getElementById('progressBar');
+            const steps = document.querySelectorAll('.step');
+            steps.forEach((s, i) => {
+                s.classList.remove('active', 'completed');
+                if (i + 1 < step) s.classList.add('completed');
+                if (i + 1 === step) s.classList.add('active');
+            });
+            const progressPercent = ((step - 1) / (steps.length - 1)) * 100;
+            progressBar.style.width = `${progressPercent}%`;
+        }
+
+        function toggleCollapse(headerElement) {
+            const icon = headerElement.querySelector('.toggle-icon');
+            const content = headerElement.nextElementSibling;
+            content.classList.toggle('collapsed');
+            headerElement.classList.toggle('collapsed');
+        }
+
+        function getInputs() {
+            const ids = [
+                "reservoirPressure", "productivityIndex", "bubblePointPressure", "gasOilRatio",
+                "waterCut", "liquidDensity", "boFactor", "viscosity", "tubingId", "pumpDepth",
+                "tubingHeadPressure", "targetFlowRate", "separatorEfficiency", "viscCorrHead", "viscCorrEff",
+                "surfaceTemperature", "tempGradient", "gasSpecificGravity"
+            ];
+            const inputs = {};
+            for (const id of ids) {
+                const element = document.getElementById(id);
+                if (!element) return null;
+                const value = parseFloat(element.value);
+                if (isNaN(value) || value < 0) return null;
+                inputs[id.replace(/_(\w)/g, (match, p1) => p1.toUpperCase())] = value;
+            }
+            return inputs;
+        }
+
+        // --- Слайдеры ---
+        function setupSliders() {
+            const sliders = ['separatorEfficiency', 'viscCorrHead', 'viscCorrEff'];
+            sliders.forEach(id => {
+                const slider = document.getElementById(id);
+                const valueDisplay = document.getElementById(id + 'Value');
+                if (slider && valueDisplay) {
+                    slider.addEventListener('input', function() {
+                        let val = parseFloat(this.value);
+                        if (id === 'separatorEfficiency') {
+                            valueDisplay.textContent = val.toFixed(2) + '%';
+                        } else {
+                            valueDisplay.textContent = val.toFixed(2);
+                        }
+                    });
+                    // Инициализация
+                    let val = parseFloat(slider.value);
+                    if (id === 'separatorEfficiency') {
+                        valueDisplay.textContent = val.toFixed(2) + '%';
+                    } else {
+                        valueDisplay.textContent = val.toFixed(2);
+                    }
+                }
+            });
+        }
+
+        // --- УЛУЧШЕННЫЙ IPR (Vogel) ---
+        function createIprFunction(inputs) {
+            const J_bbl_psi = inputs.productivityIndex * (M3_TO_BBL / ATM_TO_PSI);
+            const Pr_psi = inputs.reservoirPressure * ATM_TO_PSI;
+            const Pb_psi = inputs.bubblePointPressure * ATM_TO_PSI;
+            const Fw = inputs.waterCut / 100.0;
+            const Fo = 1.0 - Fw;
+            const Qmax_bbl = (J_bbl_psi * Pb_psi) / 1.8;
+            return (q_bbl) => {
+                for (let p_psi = Pr_psi; p_psi >= 0; p_psi -= 0.5) {
+                    let q_calc = 0;
+                    if (p_psi >= Pb_psi) {
+                        q_calc = J_bbl_psi * (Pr_psi - p_psi);
+                    } else {
+                        const q_bubble = J_bbl_psi * (Pr_psi - Pb_psi);
+                        const vogel_part = 1.0 - 0.2 * (p_psi / Pb_psi) - 0.8 * Math.pow(p_psi / Pb_psi, 2);
+                        const q_oil_vogel = Qmax_bbl * vogel_part;
+                        const q_oil_total = q_bubble + q_oil_vogel;
+                        const q_water = J_bbl_psi * (Pr_psi - p_psi);
+                        q_calc = Fo * q_oil_total + Fw * q_water;
+                    }
+                    if (q_calc >= q_bbl) return p_psi;
+                }
+                return 0;
+            };
+        }
+
+        // --- КОРРЕЛЯЦИЯ BEGGS-BRILL ДЛЯ МНОГОФАЗНОГО ПОТОКА ---
+        function calculateBeggsBrill(flow_rate_m3, gas_rate_m3, inputs) {
+            const tubingId_m = inputs.tubingId / 1000;
+            const depth = inputs.pumpDepth;
+            const flow_rate_m3_s = flow_rate_m3 / (24 * 3600);
+            const gas_rate_m3_s = gas_rate_m3 / (24 * 3600);
+            const rho_l = inputs.liquidDensity;
+            const rho_g = inputs.gasSpecificGravity * 1.225;
+            const area = Math.PI * Math.pow(tubingId_m / 2, 2);
+            const v_sl = flow_rate_m3_s / area;
+            const v_sg = gas_rate_m3_s / area;
+            const v_m = v_sl + v_sg;
+            const lambda_l = v_sl / v_m;
+            const Froude = Math.pow(v_m, 2) / (G * tubingId_m);
+            let flow_pattern = "Рассеянный";
+            if (Froude < 0.01) flow_pattern = "Сегментный";
+            else if (Froude < 0.1) flow_pattern = "Переходный";
+            else if (Froude < 1.0) flow_pattern = "Пробковый";
+            const L1 = 316 * Math.pow(lambda_l, 0.302);
+            const L2 = 0.00091 * Math.pow(lambda_l, -2.843);
+            const L3 = 0.1 * Math.pow(lambda_l, -1.538);
+            const L4 = 0.5 * Math.pow(lambda_l, -6.389);
+            let B = 0;
+            if (lambda_l < 0.01 && Froude >= L1) B = 1;
+            else if (lambda_l >= 0.01 && Froude >= L2) B = 1;
+            else if (0.01 <= lambda_l && lambda_l < 0.4 && L3 <= Froude && Froude <= L1) B = (L3 - Froude) / (L3 - L1);
+            else if (0.4 <= lambda_l && lambda_l <= 1.0 && L3 <= Froude && Froude <= L4) B = (L3 - Froude) / (L3 - L4);
+            else if (0.4 <= lambda_l && lambda_l <= 1.0 && Froude >= L1) B = 1;
+            else if (lambda_l < 0.4 && Froude <= L2) B = (L2 - Froude) / (L2 - L3);
+            else if (lambda_l >= 0.01 && Froude <= L2) B = (L2 - Froude) / (L2 - L3);
+            const Hl = lambda_l * B + (1 - lambda_l) * (1 - B);
+            const rho_mix = rho_l * Hl + rho_g * (1 - Hl);
+            const mu_l = inputs.viscosity / 1000;
+            const mu_g = 0.00001;
+            const mu_mix = mu_l * Hl + mu_g * (1 - Hl);
+            const Re = (rho_mix * v_m * tubingId_m) / mu_mix;
+            const f = Math.pow(1 / (-4 * Math.log10(1/3.7 + 5.74/Math.pow(Re, 0.9))), 2);
+            const delta_p_friction = f * (depth / tubingId_m) * (rho_mix * Math.pow(v_m, 2)) / (2 * 101325);
+            const delta_p_gravity = (rho_mix * G * depth) / 101325;
+            const delta_p_total = delta_p_gravity + delta_p_friction;
+            return {
+                flow_pattern: flow_pattern,
+                liquid_holdup: Hl,
+                mixture_density: rho_mix,
+                mixture_velocity: v_m,
+                pressure_drop: delta_p_total,
+                friction_loss: delta_p_friction,
+                gravity_loss: delta_p_gravity,
+                reynolds_number: Re
+            };
+        }
+
+        function calculateVoidFractionAndRate(pip_atm, temp_bottom_c, inputs) {
+            const P_downhole_Pa = pip_atm * 101325;
+            const T_downhole_K = temp_bottom_c + 273.15;
+            const T_std_K = 20 + 273.15;
+            const P_std_atm = 1.033;
+            const Z = 0.9;
+            const oil_fraction = 1 - (inputs.waterCut / 100);
+            const surface_oil_rate = inputs.targetFlowRate * oil_fraction;
+            if (pip_atm >= inputs.bubblePointPressure) {
+                const liquid_rate_downhole = inputs.targetFlowRate * inputs.boFactor;
+                return { void_fraction: 0, total_rate: liquid_rate_downhole, gas_rate: 0 };
+            }
+            const solution_gor = inputs.gasOilRatio * Math.pow(pip_atm / inputs.bubblePointPressure, 1.2);
+            const free_gor_surface = Math.max(0, inputs.gasOilRatio - solution_gor);
+            const gas_rate_surface = surface_oil_rate * free_gor_surface;
+            const gas_rate_downhole = gas_rate_surface *
+                (P_std_atm / pip_atm) *
+                (T_downhole_K / T_std_K) *
+                Z;
+            const liquid_rate_downhole = inputs.targetFlowRate * inputs.boFactor;
+            const total_rate = liquid_rate_downhole + gas_rate_downhole;
+            const void_fraction = total_rate > 0 ? (gas_rate_downhole / total_rate) * 100 : 0;
+            return { void_fraction, total_rate, gas_rate: gas_rate_downhole };
+        }
+
+        // --- УЛУЧШЕННАЯ МОДЕЛЬ ДЕГРАДАЦИИ ОТ ГАЗА ---
+        function estimateGasDegradation(void_fraction_percent, gas_tolerance = "Средняя") {
+            const vf = void_fraction_percent / 100;
+            let head_factor = 1.0;
+            let eff_factor = 1.0;
+
+            // Базовые коэффициенты для средней толерантности
+            let base_a = 0.5, base_b = 0.45, base_c = 0.3, base_d = 0.3;
+            let eff_a = 0.3, eff_b = 0.47, eff_c = 0.3, eff_d = 0.3;
+
+            // Коррекция на основе толерантности
+            if (gas_tolerance === "Низкая") {
+                // Нет коррекции, базовые значения
+            } else if (gas_tolerance === "Средняя") {
+                base_a = 0.5; base_b = 0.45; base_c = 0.3; base_d = 0.3;
+                eff_a = 0.3; eff_b = 0.47; eff_c = 0.3; eff_d = 0.3;
+            } else if (gas_tolerance === "Высокая") {
+                // Уменьшаем деградацию
+                base_a = 0.3; base_b = 0.3; base_c = 0.2; base_d = 0.2;
+                eff_a = 0.2; eff_b = 0.3; eff_c = 0.2; eff_d = 0.2;
+            }
+
+            if (vf <= 0.05) {
+                head_factor = 1.0;
+                eff_factor = 1.0;
+            } else if (vf <= 0.15) {
+                head_factor = 1.0 - base_a * (vf - 0.05) / 0.10;
+                eff_factor = 1.0 - eff_a * (vf - 0.05) / 0.10;
+            } else if (vf <= 0.30) {
+                head_factor = (1.0 - base_a) - base_b * (vf - 0.15) / 0.15;
+                eff_factor = (1.0 - eff_a) - eff_b * (vf - 0.15) / 0.15;
+            } else {
+                head_factor = (1.0 - base_a - base_b) - base_c * Math.min(1.0, (vf - 0.30) / 0.20);
+                eff_factor = (1.0 - eff_a - eff_b) - eff_c * Math.min(1.0, (vf - 0.30) / 0.20);
+            }
+            head_factor = Math.max(0.2, Math.min(1.0, head_factor));
+            eff_factor = Math.max(0.2, Math.min(1.0, eff_factor));
+            return { head: head_factor, eff: eff_factor };
+        }
+
+
+        // --- УЛУЧШЕННЫЙ РАСЧЕТ ДАВЛЕНИЯ НАСЫЩЕННЫХ ПАРОВ (Упрощенная корреляция Антона) ---
+        function calculateVaporPressure(temp_c, pb_atm, gas_oil_ratio) {
+            // Антон: log10(Pv) = A - B / (T + C)
+            // Для углеводородов (приближение): A=6.834, B=948.2, C=239.7 (для Pv в мм.рт.ст., T в °C)
+            // Переводим в атм: 1 атм = 760 мм.рт.ст.
+            const A = 6.834;
+            const B = 948.2;
+            const C = 239.7;
+            const log10_pv_mmHg = A - B / (temp_c + C);
+            const pv_mmHg = Math.pow(10, log10_pv_mmHg);
+            const pv_atm = pv_mmHg / 760;
+            return Math.min(pb_atm, Math.max(0.03, pv_atm));
+        }
+
+        function calculateNPSH(pip_atm, temp_bottom_c, inputs) {
+            const vapor_pressure_atm = calculateVaporPressure(temp_bottom_c, inputs.bubblePointPressure, inputs.gasOilRatio);
+            const separator_loss = 0.5;
+            const pump_inlet_pressure = pip_atm - separator_loss;
+            const npsh_available = pump_inlet_pressure - vapor_pressure_atm;
+            return {
+                npsh_available: npsh_available,
+                vapor_pressure: vapor_pressure_atm,
+                pump_inlet_pressure: pump_inlet_pressure
+            };
+        }
+
+        // --- ИТЕРАЦИОННЫЙ РАСЧЕТ PIP/PWF ---
+        function calculatePipIteratively(target_flow_rate_m3, inputs) {
+            const getPwfFromQ = createIprFunction(inputs);
+            const target_q_bbl_surface = target_flow_rate_m3 * M3_TO_BBL;
+            let pip_psi = getPwfFromQ(target_q_bbl_surface);
+            let pip_atm = pip_psi / ATM_TO_PSI;
+            for (let iter = 0; iter < 5; iter++) {
+                const tempBottom = inputs.surfaceTemperature + (inputs.pumpDepth / 100) * inputs.tempGradient;
+                const voidResult = calculateVoidFractionAndRate(pip_atm, tempBottom, inputs);
+                const downhole_q_m3 = voidResult.total_rate;
+                const multiphaseResult = calculateBeggsBrill(downhole_q_m3, voidResult.gas_rate, inputs);
+                const liquidDensity = inputs.liquidDensity;
+                const pip_head_m = (pip_atm * 101325) / (liquidDensity * G);
+                const pdp_head_m = ((pip_atm + multiphaseResult.pressure_drop) * 101325) / (liquidDensity * G);
+                const tdh_m = Math.max(0, pdp_head_m - pip_head_m);
+                const new_pip_head_m = pdp_head_m - tdh_m;
+                const new_pip_atm = (new_pip_head_m * liquidDensity * G) / 101325;
+                if (Math.abs(new_pip_atm - pip_atm) < 0.1) {
+                    pip_atm = new_pip_atm;
+                    break;
+                }
+                pip_atm = 0.7 * pip_atm + 0.3 * new_pip_atm;
+            }
+            return pip_atm;
+        }
+
+        // --- ФУНКЦИИ ОТОБРАЖЕНИЯ РЕЗУЛЬТАТОВ ---
+        function getStatusIconAndClass(status) {
+            switch (status) {
+                case 'optimal':
+                    return { icon: '✅', cls: 'success-text' };
+                case 'warning':
+                    return { icon: '⚠️', cls: 'warning-text' };
+                case 'danger':
+                    return { icon: '❌', cls: 'error-text' };
+                case 'info':
+                    return { icon: 'ℹ️', cls: 'info-text' };
+                default:
+                    return { icon: '', cls: '' };
+            }
+        }
+
+        function renderKeyFindings(findings) {
+            const findingsDiv = document.getElementById('key_findings');
+            const findingsList = document.getElementById('findings_list');
+            if (findings.length > 0) {
+                findingsList.innerHTML = findings.map(f => `<li>${f}</li>`).join('');
+                findingsDiv.style.display = 'block';
+            } else {
+                findingsDiv.style.display = 'none';
+            }
+        }
+
+        function renderDesignResult(designParams, inputs) {
+            const div = document.getElementById('design_result');
+            const voidFraction = designParams.void_fraction;
+            let statusClass = 'success-text';
+            let statusText = 'Низкая';
+            let statusIcon = '✅';
+            if (voidFraction > 30) {
+                statusClass = 'error-text';
+                statusText = 'Высокая';
+                statusIcon = '❌';
+            } else if (voidFraction > 15) {
+                statusClass = 'warning-text';
+                statusText = 'Средняя';
+                statusIcon = '⚠️';
+            }
+
+            div.innerHTML = `
+                <div class="result-grid">
+                    <div class="result-card">
+                        <h4><i class="fas fa-tint icon-inline"></i> Погружной дебит</h4>
+                        <div class="result-value">${designParams.downhole_q_m3.toFixed(1)} м³/сут</div>
+                    </div>
+                    <div class="result-card">
+                        <h4><i class="fas fa-wind icon-inline"></i> Доля газа</h4>
+                        <div class="result-value ${statusClass}">${voidFraction.toFixed(1)} % ${statusIcon}</div>
+                        <div class="indicator-bar">
+                            <div class="indicator-fill ${voidFraction > 30 ? 'danger' : voidFraction > 15 ? 'warning' : 'success'}" style="width:${Math.min(100, voidFraction)}%"></div>
+                        </div>
+                    </div>
+                    <div class="result-card">
+                        <h4><i class="fas fa-arrow-up icon-inline"></i> Требуемый напор (TDH)</h4>
+                        <div class="result-value">${designParams.tdh_m.toFixed(1)} м</div>
+                    </div>
+                    <div class="result-card">
+                        <h4><i class="fas fa-tachometer-alt icon-inline"></i> Давление на приеме (PIP)</h4>
+                        <div class="result-value">${designParams.pip_atm.toFixed(1)} атм</div>
+                    </div>
+                    <div class="result-card">
+                        <h4><i class="fas fa-thermometer-half icon-inline"></i> Температура на забое</h4>
+                        <div class="result-value">${designParams.tempBottom.toFixed(1)} °C</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderMultiphaseResult(multiphaseResult) {
+            const div = document.getElementById('multiphase_result');
+            div.innerHTML = `
+                <div class="result-grid">
+                    <div class="result-card">
+                        <h4><i class="fas fa-water icon-inline"></i> Режим потока</h4>
+                        <div class="result-value">${multiphaseResult.flow_pattern}</div>
+                    </div>
+                    <div class="result-card">
+                        <h4><i class="fas fa-prescription-bottle icon-inline"></i> Удержание жидкости</h4>
+                        <div class="result-value">${(multiphaseResult.liquid_holdup * 100).toFixed(1)} %</div>
+                    </div>
+                    <div class="result-card">
+                        <h4><i class="fas fa-weight-hanging icon-inline"></i> Плотность смеси</h4>
+                        <div class="result-value">${multiphaseResult.mixture_density.toFixed(1)} кг/м³</div>
+                    </div>
+                    <div class="result-card">
+                        <h4><i class="fas fa-tachometer-alt icon-inline"></i> Скорость потока</h4>
+                        <div class="result-value">${(multiphaseResult.mixture_velocity).toFixed(2)} м/с</div>
+                    </div>
+                    <div class="result-card">
+                        <h4><i class="fas fa-chart-line icon-inline"></i> Потери давления</h4>
+                        <div class="result-value">${multiphaseResult.pressure_drop.toFixed(1)} атм</div>
+                    </div>
+                    <div class="result-card">
+                        <h4><i class="fas fa-mountain icon-inline"></i> Гравитационные потери</h4>
+                        <div class="result-value">${multiphaseResult.gravity_loss.toFixed(1)} атм</div>
+                    </div>
+                    <div class="result-card">
+                        <h4><i class="fas fa-wind icon-inline"></i> Потери на трение</h4>
+                        <div class="result-value">${multiphaseResult.friction_loss.toFixed(1)} атм</div>
+                    </div>
+                    <div class="result-card">
+                        <h4><i class="fas fa-sort-numeric-up icon-inline"></i> Число Рейнольдса</h4>
+                        <div class="result-value">${multiphaseResult.reynolds_number.toExponential(2)}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderPumpSelectionTable(pumps, downhole_q_m3) {
+            const tableBody = document.getElementById('pump_selection_table').querySelector('tbody');
+            const messageDiv = document.getElementById('pump_selection_message');
+            tableBody.innerHTML = '';
+            if (pumps.length === 0) {
+                messageDiv.innerHTML = '<span class="error-text"><i class="fas fa-exclamation-circle icon-inline"></i> Нет подходящих насосов. Требуемый погружной дебит: <b>' + downhole_q_m3.toFixed(1) + ' м³/сут</b>. Рассмотрите насосы с более широким диапазоном.</span>';
+                return;
+            }
+            messageDiv.innerHTML = '<i class="fas fa-info-circle icon-inline"></i> Насосы, подходящие по диапазону дебита. Выберите один для итогового расчета.';
+            pumps.forEach(pump => {
+                const row = document.createElement('tr');
+                const qRange = `${pump.min_q_m3}-${pump.max_q_m3}`;
+                
+                // Определяем статус насоса
+                let statusClass = '';
+                let statusText = 'Подходит';
+                let statusIcon = 'ℹ️';
+                const isOptimal = downhole_q_m3 >= pump.nominal_q_m3 * 0.7 && downhole_q_m3 <= pump.nominal_q_m3 * 1.1;
+                const isWarningLow = downhole_q_m3 >= pump.min_q_m3 && downhole_q_m3 < pump.nominal_q_m3 * 0.5;
+                const isWarningHigh = downhole_q_m3 > pump.nominal_q_m3 * 1.3 && downhole_q_m3 <= pump.max_q_m3;
+                const isDangerLow = downhole_q_m3 < pump.min_q_m3;
+                const isDangerHigh = downhole_q_m3 > pump.max_q_m3;
+
+                if (isOptimal) {
+                    statusClass = 'optimal';
+                    statusText = 'Оптимальный';
+                    statusIcon = '✅';
+                } else if (isWarningLow || isWarningHigh) {
+                    statusClass = 'warning';
+                    statusText = 'Пограничный';
+                    statusIcon = '⚠️';
+                } else if (isDangerLow || isDangerHigh) {
+                    statusClass = 'danger';
+                    statusText = 'Неподходящий';
+                    statusIcon = '❌';
+                }
+
+                row.className = statusClass;
+                row.innerHTML = `
+                    <td>${pump.name}</td>
+                    <td>${qRange}</td>
+                    <td>${pump.head_per_stage_m.toFixed(1)}</td>
+                    <td>${(pump.base_eff * 100).toFixed(0)}</td>
+                    <td>${pump.npsh_req.toFixed(1)}</td>
+                    <td><span class="${getStatusIconAndClass(statusClass.split(' ')[0]).cls}">${statusIcon} ${statusText}</span></td>
+                `;
+                row.addEventListener('click', () => selectPump(pump));
+                tableBody.appendChild(row);
+            });
+        }
+
+        function renderStagingResult(pump, stages, shaft_power_kw, motor_power_kw, voidFraction, gasAfterSep, gasHeadFactor, eff_after_visc, gasEffFactor, npshResult) {
+            const div = document.getElementById('staging_result_cards');
+            const cavitationStatus = npshResult.npsh_available > pump.npsh_req;
+            const cavitationIcon = cavitationStatus ? '✅ Безопасный режим' : '❌ Риск кавитации!';
+            const cavitationClass = cavitationStatus ? 'success-text' : 'error-text';
+
+            div.innerHTML = `
+                <div class="result-card">
+                    <h4><i class="fas fa-pump icon-inline"></i> Насос</h4>
+                    <div class="result-value">${pump.name}</div>
+                </div>
+                <div class="result-card">
+                    <h4><i class="fas fa-wind icon-inline"></i> Газ на приёме</h4>
+                    <div class="result-value">${voidFraction.toFixed(1)} %</div>
+                </div>
+                <div class="result-card">
+                    <h4><i class="fas fa-filter icon-inline"></i> Газ после сепаратора</h4>
+                    <div class="result-value">${gasAfterSep.toFixed(1)} %</div>
+                </div>
+                <div class="result-card">
+                    <h4><i class="fas fa-arrow-down icon-inline"></i> Деградация напора</h4>
+                    <div class="result-value warning-text">-${(100*(1-gasHeadFactor)).toFixed(1)} %</div>
+                    <div class="indicator-bar">
+                        <div class="indicator-fill warning" style="width:${(100*(1-gasHeadFactor))}%"></div>
+                    </div>
+                </div>
+                <div class="result-card">
+                    <h4><i class="fas fa-water icon-inline"></i> Напор/ступень</h4>
+                    <div class="result-value">${(pump.head_per_stage_m * lastInputs.viscCorrHead * gasHeadFactor).toFixed(1)} м</div>
+                </div>
+                <div class="result-card">
+                    <h4><i class="fas fa-layer-group icon-inline"></i> Количество ступеней</h4>
+                    <div class="result-value"><b>${stages} шт.</b></div>
+                </div>
+                <div class="result-card">
+                    <h4><i class="fas fa-bolt icon-inline"></i> Мощность на валу</h4>
+                    <div class="result-value"><b>${shaft_power_kw.toFixed(1)} кВт</b></div>
+                </div>
+                <div class="result-card">
+                    <h4><i class="fas fa-exclamation-triangle icon-inline"></i> Кавитация</h4>
+                    <div class="result-value ${cavitationClass}">${cavitationIcon}</div>
+                </div>
+            `;
+        }
+
+        function renderMotorResult(shaft_power_kw, motor_current_a, cable_loss_kw, motor_input_power_kw, recommended_motor_power_kw, selected_motor_power) {
+            const div = document.getElementById('motor_result');
+            div.innerHTML = `
+                <div class="result-grid">
+                    <div class="result-card">
+                        <h4><i class="fas fa-cogs icon-inline"></i> Мощность на валу насоса</h4>
+                        <div class="result-value">${shaft_power_kw.toFixed(1)} кВт</div>
+                    </div>
+                    <div class="result-card">
+                        <h4><i class="fas fa-plug icon-inline"></i> Ток двигателя (оценка)</h4>
+                        <div class="result-value">${motor_current_a.toFixed(1)} А</div>
+                    </div>
+                    <div class="result-card">
+                        <h4><i class="fas fa-bolt icon-inline"></i> Потери в кабеле</h4>
+                        <div class="result-value">${cable_loss_kw.toFixed(1)} кВт</div>
+                    </div>
+                    <div class="result-card">
+                        <h4><i class="fas fa-tachometer-alt icon-inline"></i> Требуемая мощность</h4>
+                        <div class="result-value">${motor_input_power_kw.toFixed(1)} кВт</div>
+                    </div>
+                    <div class="result-card">
+                        <h4><i class="fas fa-lightbulb icon-inline"></i> Рекомендуемая мощность</h4>
+                        <div class="result-value">${recommended_motor_power_kw.toFixed(1)} кВт</div>
+                    </div>
+                    <div class="result-card">
+                        <h4><i class="fas fa-motorcycle icon-inline"></i> Рекомендуемый двигатель</h4>
+                        <div class="result-value success-text"><b>ДПЭ-${selected_motor_power}</b></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderCavitationResult(npshResult, pump) {
+            const div = document.getElementById('cavitation_result');
+            const cavitationStatus = npshResult.npsh_available > pump.npsh_req;
+            const cavitationIcon = cavitationStatus ? '✅ Безопасный режим' : '❌ Риск кавитации!';
+            const cavitationClass = cavitationStatus ? 'success-text' : 'error-text';
+
+            div.innerHTML = `
+                <div class="result-grid">
+                    <div class="result-card">
+                        <h4><i class="fas fa-tachometer-alt icon-inline"></i> Давление на входе</h4>
+                        <div class="result-value">${npshResult.pump_inlet_pressure.toFixed(1)} атм</div>
+                    </div>
+                    <div class="result-card">
+                        <h4><i class="fas fa-cloud icon-inline"></i> Давление паров</h4>
+                        <div class="result-value">${npshResult.vapor_pressure.toFixed(2)} атм</div>
+                    </div>
+                    <div class="result-card">
+                        <h4><i class="fas fa-arrow-up icon-inline"></i> NPSH<sub>available</sub></h4>
+                        <div class="result-value">${npshResult.npsh_available.toFixed(1)} атм</div>
+                    </div>
+                    <div class="result-card">
+                        <h4><i class="fas fa-arrow-down icon-inline"></i> NPSH<sub>required</sub> (насос)</h4>
+                        <div class="result-value">${pump.npsh_req.toFixed(1)} атм</div>
+                    </div>
+                    <div class="result-card">
+                        <h4><i class="fas fa-exclamation-triangle icon-inline"></i> Статус кавитации</h4>
+                        <div class="result-value ${cavitationClass}">${cavitationIcon}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- ОСНОВНАЯ ФУНКЦИЯ РАСЧЕТА ---
+        async function runFullCalculation() {
+            if (isCalculationRunning) {
+                alert("Расчет уже выполняется. Пожалуйста, дождитесь завершения.");
+                return;
+            }
+            isCalculationRunning = true;
+            updateProgressBar(2);
+            
+            // Очистка и подготовка
+            const designResultDiv = document.getElementById('design_result');
+            const pumpSelectionTableBody = document.getElementById('pump_selection_table').querySelector('tbody');
+            const pumpSelectionMessage = document.getElementById('pump_selection_message');
+            const stagingResultCards = document.getElementById('staging_result_cards');
+            const multiphaseResultDiv = document.getElementById('multiphase_result');
+            const cavitationResultDiv = document.getElementById('cavitation_result');
+            const motorResultDiv = document.getElementById('motor_result');
+            const inputStatusDiv = document.getElementById('inputStatus');
+            const mainResultsWrapper = document.getElementById('main_results_wrapper');
+            const keyFindingsDiv = document.getElementById('key_findings');
+            
+            if (chartInstance) chartInstance.destroy();
+            stagingResultCards.innerHTML = '';
+            pumpSelectionTableBody.innerHTML = '';
+            pumpSelectionMessage.innerHTML = '';
+            multiphaseResultDiv.innerHTML = '';
+            cavitationResultDiv.innerHTML = '';
+            motorResultDiv.innerHTML = '';
+            designResultDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Выполняется расчёт... Пожалуйста, подождите.';
+            mainResultsWrapper.style.display = 'block';
+            keyFindingsDiv.style.display = 'none';
+            inputStatusDiv.className = 'status-message status-info';
+            inputStatusDiv.innerHTML = '<i class="fas fa-spinner fa-spin icon-inline"></i> Расчет в процессе...';
+
+            const inputs = getInputs();
+            if (!inputs) {
+                designResultDiv.innerHTML = '<span class="error-text"><i class="fas fa-exclamation-circle icon-inline"></i> Ошибка: Заполните все числовые поля и убедитесь, что значения положительные.</span>';
+                inputStatusDiv.className = 'status-message error-text';
+                inputStatusDiv.innerHTML = '<i class="fas fa-exclamation-circle icon-inline"></i> Ошибка ввода данных';
+                isCalculationRunning = false;
+                updateProgressBar(1);
+                return;
+            }
+
+            document.querySelectorAll('input').forEach(input => {
+                const val = parseFloat(input.value);
+                if (isNaN(val) || val < 0) {
+                    input.classList.add('error');
+                } else {
+                    input.classList.remove('error');
+                }
+            });
+
+            const tempBottom = inputs.surfaceTemperature + (inputs.pumpDepth / 100) * inputs.tempGradient;
+            lastInputs = inputs;
+
+            try {
+                const pip_atm = calculatePipIteratively(inputs.targetFlowRate, inputs);
+                const voidResult = calculateVoidFractionAndRate(pip_atm, tempBottom, inputs);
+                const downhole_q_m3 = voidResult.total_rate;
+                const multiphaseResult = calculateBeggsBrill(downhole_q_m3, voidResult.gas_rate, inputs);
+                const liquidDensity = inputs.liquidDensity;
+                const pip_head_m = (pip_atm * 101325) / (liquidDensity * G);
+                const pdp_head_m = ((pip_atm + multiphaseResult.pressure_drop) * 101325) / (liquidDensity * G);
+                const tdh_m = Math.max(0, pdp_head_m - pip_head_m);
+
+                window.designParams = {
+                    downhole_q_m3,
+                    tdh_m,
+                    pip_atm,
+                    tempBottom,
+                    void_fraction: voidResult.void_fraction,
+                    multiphaseResult: multiphaseResult
+                };
+
+                // Отображение результатов
+                renderDesignResult(window.designParams, inputs);
+                renderMultiphaseResult(multiphaseResult);
+
+                const suitable_pumps = borets_catalog.filter(pump =>
+                    downhole_q_m3 >= pump.min_q_m3 && downhole_q_m3 <= pump.max_q_m3
+                );
+
+                renderPumpSelectionTable(suitable_pumps, downhole_q_m3);
+
+                calculationResults = {
+                    inputs: inputs,
+                    design: window.designParams,
+                    multiphase: multiphaseResult,
+                    suitable_pumps: suitable_pumps
+                };
+
+                // Ключевые выводы
+                const findings = [];
+                findings.push(`Требуемый дебит на забое: <b>${downhole_q_m3.toFixed(1)} м³/сут</b>.`);
+                findings.push(`Требуемый напор (TDH): <b>${tdh_m.toFixed(1)} м</b>.`);
+                findings.push(`Доля газа на приеме: <b>${voidResult.void_fraction.toFixed(1)}%</b> (${voidResult.void_fraction > 30 ? 'Высокая' : voidResult.void_fraction > 15 ? 'Средняя' : 'Низкая'}).`);
+                if (suitable_pumps.length > 0) {
+                    findings.push(`Найдено <b>${suitable_pumps.length}</b> подходящих насосов. Выберите один для продолжения.`);
+                } else {
+                    findings.push(`<span class="error-text">Не найдено подходящих насосов. Рассмотрите насосы с более широким диапазоном.</span>`);
+                }
+                renderKeyFindings(findings);
+
+                inputStatusDiv.className = 'status-message success-text';
+                inputStatusDiv.innerHTML = '<i class="fas fa-check-circle icon-inline"></i> Расчет завершен. Выберите насос из таблицы.';
+                isCalculationRunning = false;
+                updateProgressBar(3);
+            } catch (error) {
+                console.error("Ошибка в расчете:", error);
+                designResultDiv.innerHTML = '<span class="error-text"><i class="fas fa-exclamation-triangle icon-inline"></i> Ошибка в расчете. Проверьте введенные данные.</span>';
+                inputStatusDiv.className = 'status-message error-text';
+                inputStatusDiv.innerHTML = '<i class="fas fa-exclamation-triangle icon-inline"></i> Ошибка расчета';
+                isCalculationRunning = false;
+                updateProgressBar(1);
+            }
+        }
+
+        function selectPump(pump) {
+            if (event && event.currentTarget) {
+                 document.querySelectorAll('#pump_selection_table tbody tr').forEach(row => row.classList.remove('selected-row'));
+                 event.currentTarget.classList.add('selected-row');
+            }
+            calculateStaging(pump);
+        }
+
+        async function calculateStaging(pump) {
+            updateProgressBar(4);
+            const inputs = lastInputs;
+            const designParams = window.designParams;
+            const stagingResultCards = document.getElementById('staging_result_cards');
+            const motorResultDiv = document.getElementById('motor_result');
+            const cavitationResultDiv = document.getElementById('cavitation_result');
+            const keyFindingsDiv = document.getElementById('key_findings');
+
+            if (!pump || !designParams || !inputs) {
+                alert("Ошибка: Не хватает данных для расчета. Запустите основной расчет.");
+                updateProgressBar(3);
+                return;
+            }
+            selectedPumpData = pump;
+
+            try {
+                const voidFraction = designParams.void_fraction;
+                const { head: gasHeadFactor, eff: gasEffFactor } = estimateGasDegradation(voidFraction, pump.gas_tolerance);
+                const separatorEfficiencyFactor = 1 - (inputs.separatorEfficiency / 100);
+                const gasAfterSep = voidFraction * separatorEfficiencyFactor;
+                const head_after_visc = pump.head_per_stage_m * inputs.viscCorrHead;
+                const eff_after_visc = pump.base_eff * inputs.viscCorrEff;
+                const final_head_per_stage = head_after_visc * gasHeadFactor;
+                const requiredStages = Math.ceil(designParams.tdh_m / final_head_per_stage);
+                const hydraulic_power_kw = (designParams.downhole_q_m3 / (24 * 3600) * inputs.liquidDensity * G * designParams.tdh_m) / 1000;
+                const shaft_power_kw = hydraulic_power_kw / (eff_after_visc * gasEffFactor);
+
+                renderStagingResult(pump, requiredStages, shaft_power_kw, 0, voidFraction, gasAfterSep, gasHeadFactor, eff_after_visc, gasEffFactor, {npsh_available: 0, npsh_req: 0});
+
+                // --- УЛУЧШЕННЫЙ РАСЧЕТ ДВИГАТЕЛЯ ---
+                const motor_efficiency = 0.88;
+                const cable_resistance_per_km = 1.15; // Ом/км для 3x16 мм²
+                const cable_length_km = inputs.pumpDepth / 1000;
+                const cable_voltage_kv = 1.0; // кВ (напряжение на двигателе)
+                const motor_current_a = (shaft_power_kw / motor_efficiency) / (Math.sqrt(3) * cable_voltage_kv * 0.85);
+                const cable_loss_kw = (3 * Math.pow(motor_current_a, 2) * cable_resistance_per_km * cable_length_km) / 1000;
+                const motor_input_power_kw = shaft_power_kw / motor_efficiency + cable_loss_kw;
+                const recommended_motor_power_kw = motor_input_power_kw * 1.15;
+                const motor_powers = [37, 45, 55, 75, 90, 110, 132, 160, 200, 250, 315];
+                let selected_motor_power = motor_powers.find(p => p >= recommended_motor_power_kw) || motor_powers[motor_powers.length - 1];
+
+                renderMotorResult(shaft_power_kw, motor_current_a, cable_loss_kw, motor_input_power_kw, recommended_motor_power_kw, selected_motor_power);
+
+                const npshResult = calculateNPSH(designParams.pip_atm, designParams.tempBottom, inputs);
+                renderCavitationResult(npshResult, pump);
+
+                calculationResults.selected_pump = pump;
+                calculationResults.stages = requiredStages;
+                calculationResults.shaft_power = shaft_power_kw;
+                calculationResults.motor_power = selected_motor_power;
+                calculationResults.cavitation = npshResult;
+
+                // Обновление ключевых выводов
+                const findings = [];
+                findings.push(`Выбран насос <b>${pump.name}</b> с <b>${requiredStages}</b> ступенями.`);
+                findings.push(`Мощность на валу: <b>${shaft_power_kw.toFixed(1)} кВт</b>. Рекомендуемый двигатель: <b>ДПЭ-${selected_motor_power}</b>.`);
+                if (npshResult.npsh_available > pump.npsh_req) {
+                    findings.push(`<span class="success-text">✅ Риск кавитации отсутствует.</span>`);
+                } else {
+                    findings.push(`<span class="error-text">❌ Высокий риск кавитации! Проверьте расчет NPSH.</span>`);
+                }
+                if (voidFraction > 30) {
+                    findings.push(`<span class="warning-text">⚠️ Высокая доля газа (${voidFraction.toFixed(1)}%). Рассмотрите установку более эффективного сепаратора или насоса с высокой газовой толерантностью.</span>`);
+                }
+                renderKeyFindings(findings);
+
+                setTimeout(() => {
+                    drawPumpChart(pump, requiredStages, designParams, inputs, gasHeadFactor, gasEffFactor);
+                }, 100);
+            } catch (error) {
+                console.error("Ошибка в финальном расчете:", error);
+                stagingResultCards.innerHTML = '<span class="error-text"><i class="fas fa-exclamation-triangle icon-inline"></i> Ошибка в финальном расчете.</span>';
+                updateProgressBar(3);
+            }
+        }
+
+        // --- УЛУЧШЕННЫЙ ГРАФИК ---
+        function drawPumpChart(pump, stages, designParams, inputs, gasHeadFactor = 1, gasEffFactor = 1) {
+            const canvas = document.getElementById('pumpChart');
+            if (!canvas) {
+                console.error("Canvas element not found");
+                return;
+            }
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+                console.error("Canvas 2D context not available");
+                return;
+            }
+            if (chartInstance) chartInstance.destroy();
+
+            const flowMin = Math.max(pump.min_q_m3 * 0.5, pump.nominal_q_m3 * 0.3);
+            const flowMax = Math.min(pump.max_q_m3 * 1.2, pump.nominal_q_m3 * 1.7);
+            const step = (flowMax - flowMin) / 50; // Более плавный график
+            const flows = [];
+            const heads = [];
+            const efficiencies = [];
+
+            const head_per_stage = pump.head_per_stage_m * inputs.viscCorrHead * gasHeadFactor;
+            const base_eff = pump.base_eff * inputs.viscCorrEff * gasEffFactor;
+
+            // Используем более реалистичную кривую напора
+            for (let q = flowMin; q <= flowMax; q += step) {
+                flows.push(q);
+                // Кривая напора: парабола H = H0 * (1 - (Q/Q0)^2)
+                const q_ratio = q / pump.nominal_q_m3;
+                const head_factor = Math.max(0, 1 - 0.05 * Math.pow(q_ratio, 2) - 0.1 * Math.pow(q_ratio, 3));
+                heads.push(head_factor * head_per_stage * stages);
+
+                // Кривая КПД: колоколообразная кривая
+                const eff_q_ratio = (q - flowMin) / (flowMax - flowMin);
+                const eff_peak_pos = 0.6; // Пик КПД ближе к левой части
+                const eff_width = 0.25;
+                // Используем нормальное распределение для формы
+                const eff_factor = Math.exp(-Math.pow((eff_q_ratio - eff_peak_pos) / eff_width, 2));
+                efficiencies.push(Math.max(5, base_eff * eff_factor * 100));
+            }
+
+            const optimalMin = pump.nominal_q_m3 * 0.7;
+            const optimalMax = pump.nominal_q_m3 * 1.1;
+            // Зона эрозии - при очень высоких дебитах
+            const erosionMin = pump.nominal_q_m3 * 1.25;
+            const erosionMax = flowMax;
+            // Зона кавитации - при низких дебитах
+            const cavitationMin = flowMin;
+            const cavitationMax = pump.min_q_m3 * 0.9;
+            
+            const workingFlow = designParams.downhole_q_m3;
+            const workingHead = designParams.tdh_m;
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Напор (м)',
+                            data: flows.map((flow, i) => ({ x: flow, y: heads[i] })),
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                            borderWidth: 3,
+                            pointRadius: 0,
+                            yAxisID: 'y',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'КПД (%)',
+                            data: flows.map((flow, i) => ({ x: flow, y: efficiencies[i] })),
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                            borderWidth: 3,
+                            pointRadius: 0,
+                            yAxisID: 'y1',
+                            tension: 0.4,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: 'white',
+                            bodyColor: 'white',
+                            borderColor: 'rgba(0, 0, 0, 0.1)',
+                            borderWidth: 1,
+                            cornerRadius: 6,
+                            displayColors: false,
+                            callbacks: {
+                                title: function(tooltipItems) {
+                                    return `Дебит: ${tooltipItems[0].parsed.x.toFixed(0)} м³/сут`;
+                                },
+                                label: function(context) {
+                                    if (context.datasetIndex === 0) {
+                                        return `Напор: ${context.parsed.y.toFixed(1)} м`;
+                                    } else {
+                                        return `КПД: ${context.parsed.y.toFixed(1)} %`;
+                                    }
+                                }
+                            }
+                        },
+                        annotation: {
+                            annotations: {
+                                optimalZone: {
+                                    type: 'box',
+                                    xMin: optimalMin,
+                                    xMax: optimalMax,
+                                    yMin: 0,
+                                    yMax: Math.max(...heads) * 1.1,
+                                    backgroundColor: 'var(--optimal-zone)',
+                                    borderColor: 'rgba(40, 167, 69, 0.5)',
+                                    borderWidth: 1,
+                                    label: {
+                                        display: true,
+                                        content: 'Оптимальная зона',
+                                        position: 'start',
+                                        backgroundColor: 'rgba(40, 167, 69, 0.7)',
+                                        font: { size: 10, weight: 'bold' },
+                                        color: '#fff'
+                                    }
+                                },
+                                cavitationZone: {
+                                    type: 'box',
+                                    xMin: cavitationMin,
+                                    xMax: cavitationMax,
+                                    yMin: 0,
+                                    yMax: Math.max(...heads) * 1.1,
+                                    backgroundColor: 'var(--cavitation-zone)',
+                                    borderColor: 'rgba(220, 53, 69, 0.3)',
+                                    borderWidth: 1,
+                                    label: {
+                                        display: true,
+                                        content: 'Зона кавитации',
+                                        position: 'end',
+                                        backgroundColor: 'rgba(220, 53, 69, 0.5)',
+                                        font: { size: 10, weight: 'bold' },
+                                        color: '#fff'
+                                    }
+                                },
+                                erosionZone: {
+                                    type: 'box',
+                                    xMin: erosionMin,
+                                    xMax: erosionMax,
+                                    yMin: 0,
+                                    yMax: Math.max(...heads) * 1.1,
+                                    backgroundColor: 'var(--erosion-zone)',
+                                    borderColor: 'rgba(156, 39, 176, 0.3)',
+                                    borderWidth: 1,
+                                    label: {
+                                        display: true,
+                                        content: 'Зона эрозии',
+                                        position: 'end',
+                                        backgroundColor: 'rgba(156, 39, 176, 0.5)',
+                                        font: { size: 10, weight: 'bold' },
+                                        color: '#fff'
+                                    }
+                                },
+                                workingPoint: {
+                                    type: 'point',
+                                    xValue: workingFlow,
+                                    yValue: workingHead,
+                                    radius: 8,
+                                    backgroundColor: 'rgba(255, 99, 132, 1)',
+                                    borderColor: 'white',
+                                    borderWidth: 2,
+                                    label: {
+                                        display: true,
+                                        content: 'Рабочая точка',
+                                        position: 'top',
+                                        backgroundColor: 'rgba(255, 99, 132, 0.8)',
+                                        font: { size: 10, weight: 'bold' },
+                                        color: '#fff'
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            title: {
+                                display: true,
+                                text: 'Дебит, м³/сут',
+                                font: { size: 14, weight: 'bold' },
+                                color: 'var(--text-color)'
+                            },
+                            min: flowMin,
+                            max: flowMax,
+                            grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                            ticks: { font: { size: 12 }, color: 'var(--text-color)' }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Напор, м',
+                                font: { size: 14, weight: 'bold' },
+                                color: 'var(--text-color)'
+                            },
+                            position: 'left',
+                            min: 0,
+                            max: Math.max(...heads) * 1.1,
+                            grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                            ticks: { font: { size: 12 }, color: 'var(--text-color)' }
+                        },
+                        y1: {
+                            title: {
+                                display: true,
+                                text: 'КПД, %',
+                                font: { size: 14, weight: 'bold' },
+                                color: 'var(--text-color)'
+                            },
+                            position: 'right',
+                            max: 100,
+                            min: 0,
+                            grid: { drawOnChartArea: false },
+                            ticks: { font: { size: 12 }, color: 'var(--text-color)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- ФУНКЦИИ ПРОГНОЗА ---
+        function runForecast() {
+            const forecastResultsWrapper = document.getElementById('forecast_results_wrapper');
+            const forecastTableBody = document.getElementById('forecast_equipment_table').querySelector('tbody');
+            const forecastFindingsList = document.getElementById('forecast_findings_list');
+            
+            forecastResultsWrapper.style.display = 'none';
+            forecastTableBody.innerHTML = '<tr><td colspan="6"><i class="fas fa-spinner fa-spin"></i> Выполняется прогноз...</td></tr>';
+            forecastFindingsList.innerHTML = '';
+
+            const declineType = document.getElementById('declineType').value;
+            const declineRate = parseFloat(document.getElementById('declineRate').value) / 100;
+            const hyperbolicN = parseFloat(document.getElementById('hyperbolicN').value);
+            const forecastPeriod = parseInt(document.getElementById('forecastPeriod').value);
+            
+            if (isNaN(declineRate) || isNaN(forecastPeriod) || forecastPeriod <= 0) {
+                alert("Пожалуйста, введите корректные параметры прогноза.");
+                forecastTableBody.innerHTML = '<tr><td colspan="6">Ошибка ввода параметров прогноза.</td></tr>';
+                return;
+            }
+
+            const initialFlowRate = lastInputs.targetFlowRate;
+            if (!initialFlowRate || initialFlowRate <= 0) {
+                alert("Пожалуйста, сначала выполните основной расчет.");
+                forecastTableBody.innerHTML = '<tr><td colspan="6">Необходимо выполнить основной расчет.</td></tr>';
+                return;
+            }
+
+            forecastResults = [];
+            let currentFlowRate = initialFlowRate;
+            let monthOfPumpChange = null;
+            let initialPump = selectedPumpData ? selectedPumpData.name : 'Не выбран';
+
+            for (let month = 0; month <= forecastPeriod; month++) {
+                // Расчет дебита по выбранной модели падения
+                if (declineType === 'exponential') {
+                    currentFlowRate = initialFlowRate * Math.exp(-declineRate * month);
+                } else if (declineType === 'hyperbolic') {
+                    currentFlowRate = initialFlowRate / Math.pow(1 + hyperbolicN * declineRate * month, 1/hyperbolicN);
+                }
+
+                // --- Мини-расчет для текущего месяца ---
+                // Это упрощенная версия runFullCalculation для прогноза
+                const tempBottom = lastInputs.surfaceTemperature + (lastInputs.pumpDepth / 100) * lastInputs.tempGradient;
+                const pip_atm = calculatePipIteratively(currentFlowRate, lastInputs);
+                const voidResult = calculateVoidFractionAndRate(pip_atm, tempBottom, lastInputs);
+                const downhole_q_m3 = voidResult.total_rate;
+                const multiphaseResult = calculateBeggsBrill(downhole_q_m3, voidResult.gas_rate, lastInputs);
+                const liquidDensity = lastInputs.liquidDensity;
+                const pip_head_m = (pip_atm * 101325) / (liquidDensity * G);
+                const pdp_head_m = ((pip_atm + multiphaseResult.pressure_drop) * 101325) / (liquidDensity * G);
+                const tdh_m = Math.max(0, pdp_head_m - pip_head_m);
+
+                // Подбор насоса
+                const suitable_pumps = borets_catalog.filter(pump =>
+                    downhole_q_m3 >= pump.min_q_m3 && downhole_q_m3 <= pump.max_q_m3
+                );
+
+                let recommendedPump = 'Нет подходящего';
+                let recommendedMotorKW = 0;
+                let status = 'OK';
+                let statusClass = '';
+
+                if (suitable_pumps.length > 0) {
+                    // Выбираем первый подходящий насос (можно улучшить логику)
+                    const pump = suitable_pumps[0]; 
+                    const { head: gasHeadFactor, eff: gasEffFactor } = estimateGasDegradation(voidResult.void_fraction, pump.gas_tolerance);
+                    const head_after_visc = pump.head_per_stage_m * lastInputs.viscCorrHead;
+                    const eff_after_visc = pump.base_eff * lastInputs.viscCorrEff;
+                    const final_head_per_stage = head_after_visc * gasHeadFactor;
+                    const requiredStages = Math.ceil(tdh_m / final_head_per_stage);
+                    const hydraulic_power_kw = (downhole_q_m3 / (24 * 3600) * lastInputs.liquidDensity * G * tdh_m) / 1000;
+                    const shaft_power_kw = hydraulic_power_kw / (eff_after_visc * gasEffFactor);
+                    const motor_efficiency = 0.88;
+                    const cable_resistance_per_km = 1.15;
+                    const cable_length_km = lastInputs.pumpDepth / 1000;
+                    const cable_voltage_kv = 1.0;
+                    const motor_current_a = (shaft_power_kw / motor_efficiency) / (Math.sqrt(3) * cable_voltage_kv * 0.85);
+                    const cable_loss_kw = (3 * Math.pow(motor_current_a, 2) * cable_resistance_per_km * cable_length_km) / 1000;
+                    const motor_input_power_kw = shaft_power_kw / motor_efficiency + cable_loss_kw;
+                    const recommended_motor_power_kw = motor_input_power_kw * 1.15;
+                    const motor_powers = [37, 45, 55, 75, 90, 110, 132, 160, 200, 250, 315];
+                    let selected_motor_power = motor_powers.find(p => p >= recommended_motor_power_kw) || motor_powers[motor_powers.length - 1];
+                    
+                    recommendedPump = pump.name;
+                    recommendedMotorKW = selected_motor_power;
+
+                    // Проверка на выход из текущей зоны
+                    if (selectedPumpData && pump.name !== selectedPumpData.name) {
+                        if (monthOfPumpChange === null) {
+                            monthOfPumpChange = month;
+                        }
+                        status = 'Смена насоса';
+                        statusClass = 'warning';
+                    }
+                    
+                } else {
+                    status = 'Нет насоса';
+                    statusClass = 'danger';
+                }
+
+                forecastResults.push({
+                    month: month,
+                    flowRate: currentFlowRate,
+                    tdh: tdh_m,
+                    recommendedPump: recommendedPump,
+                    recommendedMotorKW: recommendedMotorKW,
+                    status: status,
+                    statusClass: statusClass
+                });
+            }
+
+            // Отображение результатов
+            renderForecastTable();
+            renderForecastFindings(initialPump, monthOfPumpChange, forecastPeriod);
+            forecastResultsWrapper.style.display = 'block';
+        }
+
+        function renderForecastTable() {
+            const tableBody = document.getElementById('forecast_equipment_table').querySelector('tbody');
+            tableBody.innerHTML = '';
+            forecastResults.forEach(result => {
+                const row = document.createElement('tr');
+                if (result.statusClass) row.classList.add(result.statusClass);
+                row.innerHTML = `
+                    <td>${result.month}</td>
+                    <td>${result.flowRate.toFixed(1)}</td>
+                    <td>${result.tdh.toFixed(1)}</td>
+                    <td>${result.recommendedPump}</td>
+                    <td>${result.recommendedMotorKW}</td>
+                    <td>${result.status}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        function renderForecastFindings(initialPump, monthOfPumpChange, forecastPeriod) {
+            const findingsList = document.getElementById('forecast_findings_list');
+            const findings = [];
+            findings.push(`Исходный насос: <b>${initialPump}</b>.`);
+            if (monthOfPumpChange !== null) {
+                findings.push(`Первый месяц необходимости смены насоса: <b>${monthOfPumpChange}</b>.`);
+                findings.push(`Срок службы текущего насоса: <b>${monthOfPumpChange} месяцев</b>.`);
+            } else {
+                findings.push(`Текущий насос <b>${initialPump}</b> подходит на весь прогнозируемый период (<b>${forecastPeriod} месяцев</b>).`);
+            }
+            
+            // Подсчет потребности
+            const pumpCounts = {};
+            const motorCounts = {};
+            forecastResults.forEach(r => {
+                if (r.recommendedPump !== 'Нет подходящего') {
+                    pumpCounts[r.recommendedPump] = (pumpCounts[r.recommendedPump] || 0) + 1;
+                }
+                if (r.recommendedMotorKW > 0) {
+                    motorCounts[r.recommendedMotorKW] = (motorCounts[r.recommendedMotorKW] || 0) + 1;
+                }
+            });
+            
+            findings.push(`<b>Потребность в насосах (на период):</b>`);
+            for (const [pump, count] of Object.entries(pumpCounts)) {
+                findings.push(`&nbsp;&nbsp;${pump}: ${Math.ceil(count / forecastPeriod * 12)} шт./год`);
+            }
+            
+            findings.push(`<b>Потребность в двигателях (на период):</b>`);
+            for (const [power, count] of Object.entries(motorCounts)) {
+                findings.push(`&nbsp;&nbsp;ДПЭ-${power} кВт: ${Math.ceil(count / forecastPeriod * 12)} шт./год`);
+            }
+
+            findingsList.innerHTML = findings.map(f => `<li>${f}</li>`).join('');
+        }
+
+        // --- ЭКСПОРТ ---
+        function exportResults() {
+            if (!calculationResults || Object.keys(calculationResults).length === 0) {
+                alert("Нет результатов для экспорта. Сначала выполните расчет.");
+                return;
+            }
+            let exportText = "=== РЕЗУЛЬТАТЫ РАСЧЕТА ЭЦН (v4.0) ===\n";
+            exportText += "1. Входные данные:\n";
+            const inputs = calculationResults.inputs;
+            for (const key in inputs) {
+                exportText += `   ${key}: ${inputs[key]}\n`;
+            }
+            exportText += "\n2. Расчетные параметры:\n";
+            const design = calculationResults.design;
+            exportText += `   Погружной дебит (м³/сут): ${design.downhole_q_m3.toFixed(2)}\n`;
+            exportText += `   Доля газа (%): ${design.void_fraction.toFixed(2)}\n`;
+            exportText += `   Требуемый напор (TDH, м): ${design.tdh_m.toFixed(2)}\n`;
+            exportText += `   Давление на приеме (PIP, атм): ${design.pip_atm.toFixed(2)}\n`;
+            exportText += `   Температура на забое (°C): ${design.tempBottom.toFixed(2)}\n`;
+            exportText += "\n3. Подходящие насосы:\n";
+            const pumps = calculationResults.suitable_pumps;
+            if (pumps.length > 0) {
+                pumps.forEach(pump => {
+                    exportText += `   - ${pump.name} (Диапазон: ${pump.min_q_m3}-${pump.max_q_m3} м³/сут)\n`;
+                });
+            } else {
+                exportText += "   Нет подходящих насосов.\n";
+            }
+            if (calculationResults.selected_pump) {
+                exportText += "\n4. Выбранный насос и расчет:\n";
+                const pump = calculationResults.selected_pump;
+                exportText += `   Насос: ${pump.name}\n`;
+                exportText += `   Количество ступеней: ${calculationResults.stages}\n`;
+                exportText += `   Мощность на валу (кВт): ${calculationResults.shaft_power.toFixed(2)}\n`;
+                exportText += `   Рекомендуемый двигатель (кВт): ${calculationResults.motor_power}\n`;
+                exportText += "\n5. Анализ кавитации:\n";
+                const cav = calculationResults.cavitation;
+                exportText += `   Давление на входе (атм): ${cav.pump_inlet_pressure.toFixed(2)}\n`;
+                exportText += `   Давление насыщенных паров (атм): ${cav.vapor_pressure.toFixed(2)}\n`;
+                exportText += `   NPSH available (атм): ${cav.npsh_available.toFixed(2)}\n`;
+                exportText += `   NPSH required (атм): ${pump.npsh_req.toFixed(2)}\n`;
+                const cavStatus = cav.npsh_available > pump.npsh_req ? "Безопасный режим" : "Риск кавитации!";
+                exportText += `   Статус: ${cavStatus}\n`;
+            }
+            const blob = new Blob([exportText], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'Результаты_расчета_ЭЦН_v4.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // --- ИНИЦИАЛИЗАЦИЯ ---
+        document.addEventListener('DOMContentLoaded', function() {
+            updateProgressBar(1);
+            setupSliders();
+            
+            // Валидация полей в реальном времени
+            document.querySelectorAll('input[type="number"]').forEach(input => {
+                input.addEventListener('blur', () => {
+                    const val = parseFloat(input.value);
+                    if (isNaN(val) || val < 0) {
+                        input.classList.add('error');
+                    } else {
+                        input.classList.remove('error');
+                    }
+                });
+            });
+
+            // Обработчик для типа падения
+            document.getElementById('declineType').addEventListener('change', function() {
+                const nGroup = document.getElementById('hyperbolic_n_group');
+                if (this.value === 'hyperbolic') {
+                    nGroup.style.display = 'block';
+                } else {
+                    nGroup.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
