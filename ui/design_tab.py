@@ -87,6 +87,7 @@ class DesignTab(QWidget):
         self.chart = PumpChart()
         self.results = QLabel("")
         self.results.setTextFormat(Qt.RichText)
+        self.results.setStyleSheet("QLabel { padding: 6px; border: 1px solid #333; border-radius: 4px; }")
 
         grp = QGroupBox("Шаг 3: Итоговый расчет и рабочая точка")
         grp.setCheckable(True)

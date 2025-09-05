@@ -14,6 +14,8 @@ class CatalogTab(QWidget):
         self.manager = manager
 
         root = QVBoxLayout(self)
+        root.setContentsMargins(8, 8, 8, 8)
+        root.setSpacing(8)
         info = QHBoxLayout()
         self.path_label = QLabel(f"Каталог: {self.manager.catalog_dir}")
         self.count_label = QLabel("")
@@ -40,6 +42,7 @@ class CatalogTab(QWidget):
             "Модель", "Qmin", "Qnom", "Qmax", "Hnom", "P,кВт", "КПД,%", "Ступени",
         ])
         self.table.horizontalHeader().setStretchLastSection(True)
+        self.table.setAlternatingRowColors(True)
         root.addWidget(self.table)
 
         self.refresh()

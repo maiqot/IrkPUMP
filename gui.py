@@ -167,6 +167,22 @@ class MainWindow(QMainWindow):
 
 def run_gui() -> None:
     app = QApplication(sys.argv)
+    # Polished dark theme via QSS
+    app.setStyleSheet("""
+    QWidget { font-family: 'Segoe UI', sans-serif; font-size: 12px; }
+    QMainWindow, QWidget { background-color: #1f1f1f; color: #e6e6e6; }
+    QGroupBox { border: 1px solid #333; border-radius: 6px; margin-top: 10px; }
+    QGroupBox::title { subcontrol-origin: margin; left: 10px; padding: 2px 4px; color: #a0c4ff; }
+    QLabel { color: #d0d0d0; }
+    QLineEdit, QDoubleSpinBox, QSpinBox { background: #2a2a2a; border: 1px solid #3b3b3b; border-radius: 4px; padding: 2px 6px; }
+    QPushButton { background: #2b6cb0; border: 1px solid #2b6cb0; color: #fff; padding: 6px 12px; border-radius: 4px; }
+    QPushButton:hover { background: #2c7ad6; }
+    QPushButton:disabled { background: #3a3a3a; border-color: #3a3a3a; }
+    QTableWidget { background: #242424; gridline-color: #3a3a3a; }
+    QHeaderView::section { background: #2b2b2b; color: #ddd; border: 1px solid #3a3a3a; padding: 4px; }
+    QProgressBar { border: 1px solid #3a3a3a; border-radius: 4px; text-align: center; }
+    QProgressBar::chunk { background-color: #38bdf8; }
+    """)
     window = MainWindow()
     window.show()
     sys.exit(app.exec())
