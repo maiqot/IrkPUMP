@@ -1,0 +1,223 @@
+"""
+Pump management module for IrkPUMP.
+Handles pump data import from Excel and JSON operations.
+"""
+
+import json
+import sys
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+import pandas as pd
+
+
+class PumpManager:
+    """Manages pump data import and export operations."""
+    
+    def __init__(self, data_dir: Path = None):
+        """Initialize pump manager.
+        
+        Args:
+            data_dir: Directory to store pump data files. Defaults to current directory.
+        """
+        self.data_dir = data_dir or Path(__file__).parent
+        self.pumps_file = self.data_dir / "pumps.json"
+        self.pumps: List[Dict[str, Any]] = []
+        self.load_pumps()
+    
+    def load_pumps(self) -> None:
+        """Load pumps from JSON file."""
+        if self.pumps_file.exists():
+            try:
+                with open(self.pumps_file, 'r', encoding='utf-8') as f:
+                    self.pumps = json.load(f)
+            except (json.JSONDecodeError, IOError) as e:
+                print(f"Error loading pumps: {e}", file=sys.stderr)
+                self.pumps = []
+        else:
+            self.pumps = []
+    
+    def save_pumps(self) -> None:
+        """Save pumps to JSON file."""
+        try:
+            with open(self.pumps_file, 'w', encoding='utf-8') as f:
+                json.dump(self.pumps, f, ensure_ascii=False, indent=2)
+        except IOError as e:
+            print(f"Error saving pumps: {e}", file=sys.stderr)
+    
+    def import_from_excel(self, excel_path: str) -> Dict[str, Any]:
+        """Import pumps from Excel file.
+        
+        Expected Excel columns:
+        - model: Pump model name
+        - nominal_q_m3: Nominal flow rate (m³/day)
+        - min_q_m3: Minimum flow rate (m³/day)
+        - max_q_m3: Maximum flow rate (m³/day)
+        - nominal_head_m: Nominal head (m)
+        - min_head_m: Minimum head (m)
+        - max_head_m: Maximum head (m)
+        - nominal_power_kw: Nominal power (kW)
+        - efficiency: Efficiency (%)
+        - stages: Number of stages
+        - manufacturer: Manufacturer name
+        - notes: Additional notes
+        
+        Args:
+            excel_path: Path to Excel file
+            
+        Returns:
+            Dict with import results: {'success': bool, 'imported': int, 'errors': List[str]}
+        """
+        try:
+            # Read Excel file
+            df = pd.read_excel(excel_path, engine='openpyxl')
+            
+            # Required columns
+            required_cols = [
+                'model', 'nominal_q_m3', 'min_q_m3', 'max_q_m3',
+                'nominal_head_m', 'min_head_m', 'max_head_m',
+                'nominal_power_kw', 'efficiency', 'stages'
+            ]
+            
+            # Check for required columns
+            missing_cols = [col for col in required_cols if col not in df.columns]
+            if missing_cols:
+                return {
+                    'success': False,
+                    'imported': 0,
+                    'errors': [f"Missing required columns: {', '.join(missing_cols)}"]
+                }
+            
+            imported_count = 0
+            errors = []
+            
+            for index, row in df.iterrows():
+                try:
+                    # Create pump dictionary
+                    pump = {
+                        'id': f"pump_{len(self.pumps) + imported_count + 1}",
+                        'model': str(row['model']).strip(),
+                        'nominal_q_m3': float(row['nominal_q_m3']),
+                        'min_q_m3': float(row['min_q_m3']),
+                        'max_q_m3': float(row['max_q_m3']),
+                        'nominal_head_m': float(row['nominal_head_m']),
+                        'min_head_m': float(row['min_head_m']),
+                        'max_head_m': float(row['max_head_m']),
+                        'nominal_power_kw': float(row['nominal_power_kw']),
+                        'efficiency': float(row['efficiency']),
+                        'stages': int(row['stages']),
+                        'manufacturer': str(row.get('manufacturer', '')).strip(),
+                        'notes': str(row.get('notes', '')).strip()
+                    }
+                    
+                    # Validate data
+                    if pump['nominal_q_m3'] <= 0 or pump['min_q_m3'] <= 0 or pump['max_q_m3'] <= 0:
+                        errors.append(f"Row {index + 2}: Invalid flow rates")
+                        continue
+                    
+                    if pump['nominal_head_m'] <= 0 or pump['min_head_m'] <= 0 or pump['max_head_m'] <= 0:
+                        errors.append(f"Row {index + 2}: Invalid head values")
+                        continue
+                    
+                    if pump['efficiency'] <= 0 or pump['efficiency'] > 100:
+                        errors.append(f"Row {index + 2}: Invalid efficiency value")
+                        continue
+                    
+                    if pump['stages'] <= 0:
+                        errors.append(f"Row {index + 2}: Invalid stages count")
+                        continue
+                    
+                    self.pumps.append(pump)
+                    imported_count += 1
+                    
+                except (ValueError, TypeError) as e:
+                    errors.append(f"Row {index + 2}: {str(e)}")
+                    continue
+            
+            # Save updated pumps
+            if imported_count > 0:
+                self.save_pumps()
+            
+            return {
+                'success': True,
+                'imported': imported_count,
+                'errors': errors
+            }
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'imported': 0,
+                'errors': [f"Error reading Excel file: {str(e)}"]
+            }
+    
+    def get_pumps(self) -> List[Dict[str, Any]]:
+        """Get all pumps."""
+        return self.pumps.copy()
+    
+    def get_pump_by_id(self, pump_id: str) -> Optional[Dict[str, Any]]:
+        """Get pump by ID."""
+        for pump in self.pumps:
+            if pump['id'] == pump_id:
+                return pump
+        return None
+    
+    def delete_pump(self, pump_id: str) -> bool:
+        """Delete pump by ID."""
+        for i, pump in enumerate(self.pumps):
+            if pump['id'] == pump_id:
+                del self.pumps[i]
+                self.save_pumps()
+                return True
+        return False
+    
+    def export_to_excel(self, output_path: str) -> bool:
+        """Export pumps to Excel file.
+        
+        Args:
+            output_path: Path for output Excel file
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            if not self.pumps:
+                return False
+            
+            df = pd.DataFrame(self.pumps)
+            df.to_excel(output_path, index=False, engine='openpyxl')
+            return True
+        except Exception as e:
+            print(f"Error exporting to Excel: {e}", file=sys.stderr)
+            return False
+
+
+def create_sample_excel(file_path: str) -> None:
+    """Create a sample Excel file with pump data template.
+    
+    Args:
+        file_path: Path for the sample Excel file
+    """
+    sample_data = {
+        'model': ['ESP-100', 'ESP-200', 'ESP-300'],
+        'nominal_q_m3': [50.0, 100.0, 150.0],
+        'min_q_m3': [20.0, 40.0, 60.0],
+        'max_q_m3': [80.0, 160.0, 240.0],
+        'nominal_head_m': [500.0, 800.0, 1200.0],
+        'min_head_m': [200.0, 300.0, 450.0],
+        'max_head_m': [800.0, 1300.0, 2000.0],
+        'nominal_power_kw': [15.0, 30.0, 50.0],
+        'efficiency': [65.0, 70.0, 75.0],
+        'stages': [10, 15, 20],
+        'manufacturer': ['PumpCorp', 'PumpCorp', 'PumpCorp'],
+        'notes': ['Standard model', 'High capacity', 'Heavy duty']
+    }
+    
+    df = pd.DataFrame(sample_data)
+    df.to_excel(file_path, index=False, engine='openpyxl')
+
+
+if __name__ == "__main__":
+    # Create sample Excel file
+    create_sample_excel("sample_pumps.xlsx")
+    print("Sample Excel file created: sample_pumps.xlsx")

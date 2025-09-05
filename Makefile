@@ -5,16 +5,16 @@ PYTHON ?= python3
 venv:
 	$(PYTHON) -m venv .venv
 
-deps:
+deps: venv
 	. .venv/bin/activate && pip install -U pip && pip install -r requirements.txt
 
-run:
+run: deps
 	. .venv/bin/activate && $(PYTHON) app.py
 
-build-mac:
+build-mac: deps
 	. .venv/bin/activate && pyinstaller --noconsole --name IrkPUMP --add-data "IrkPUMP v6.html:." app.py
 
-build-win:
+build-win: deps
 	. .venv/bin/activate && pyinstaller --noconsole --name IrkPUMP --add-data "IrkPUMP v6.html;." app.py
 
 clean:

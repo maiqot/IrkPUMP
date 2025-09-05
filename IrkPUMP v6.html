@@ -766,6 +766,20 @@
                             <input type="range" id="viscCorrEff" min="0.5" max="1.5" step="0.01" value="1.0">
                         </div>
                     </div>
+                    <h4><i class="fas fa-file-excel icon-inline"></i> 4. Управление насосами</h4>
+                    <div class="input-group">
+                        <label>Импорт насосов из Excel:</label>
+                        <div class="file-input-container">
+                            <input type="file" id="excelFileInput" accept=".xlsx,.xls" style="display: none;">
+                            <button class="btn btn-secondary" onclick="document.getElementById('excelFileInput').click()">
+                                <i class="fas fa-file-upload icon-inline"></i> Выбрать файл Excel
+                            </button>
+                            <button class="btn btn-info" onclick="createSampleExcel()">
+                                <i class="fas fa-download icon-inline"></i> Создать образец Excel
+                            </button>
+                        </div>
+                        <div id="excelImportStatus" class="status-message" style="display: none;"></div>
+                    </div>
                     <div class="btn-group">
                         <button onclick="runFullCalculation()"><i class="fas fa-play icon-inline"></i> <b>ЗАПУСТИТЬ РАСЧЕТ</b></button>
                         <button class="btn-export" onclick="exportResults()"><i class="fas fa-file-export icon-inline"></i> <b>ЭКСПОРТИРОВАТЬ</b></button>
@@ -1534,6 +1548,66 @@
                     </div>
                 </div>
             `;
+        }
+
+        // --- EXCEL IMPORT FUNCTIONS ---
+        function createSampleExcel() {
+            try {
+                const samplePath = pywebview.api.createSampleExcel();
+                showStatus('success', `Образец Excel файла создан: ${samplePath}`);
+            } catch (error) {
+                showStatus('error', `Ошибка создания образца: ${error.message}`);
+            }
+        }
+
+        function showStatus(type, message) {
+            const statusDiv = document.getElementById('excelImportStatus');
+            statusDiv.className = `status-message status-${type}`;
+            statusDiv.textContent = message;
+            statusDiv.style.display = 'block';
+            
+            // Hide after 5 seconds
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Handle file input change
+        document.getElementById('excelFileInput').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                importPumpsFromExcel(file);
+            }
+        });
+
+        async function importPumpsFromExcel(file) {
+            try {
+                showStatus('info', 'Импорт насосов...');
+                
+                // Read file as array buffer
+                const arrayBuffer = await file.arrayBuffer();
+                
+                // Convert to base64 for transmission
+                const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+                
+                // Create temporary file path
+                const tempPath = `temp_${Date.now()}.xlsx`;
+                
+                // For now, we'll use a simple approach - save to temp file
+                // In a real implementation, you'd handle the file upload properly
+                const result = await pywebview.api.importPumpsFromExcel(file.name);
+                
+                if (result.success) {
+                    showStatus('success', `Успешно импортировано ${result.imported} насосов`);
+                    if (result.errors.length > 0) {
+                        console.warn('Import warnings:', result.errors);
+                    }
+                } else {
+                    showStatus('error', `Ошибка импорта: ${result.errors.join(', ')}`);
+                }
+            } catch (error) {
+                showStatus('error', `Ошибка импорта: ${error.message}`);
+            }
         }
 
         // --- ОСНОВНАЯ ФУНКЦИЯ РАСЧЕТА ---

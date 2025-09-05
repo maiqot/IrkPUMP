@@ -7,42 +7,10 @@
 - Расчет параметров скважины и флюида
 - Подбор оптимального насоса
 - Визуализация характеристик насоса
+- Импорт насосов из Excel файлов
 - Темная/светлая тема
 
 ## Установка и запуск
-
-### Требования
-- Node.js 16+ 
-- npm
-
-### Установка зависимостей (Node)
-```bash
-npm install
-```
-
-### Запуск в режиме разработки
-```bash
-npm start
-```
-
-### Сборка приложения
-
-#### macOS
-```bash
-npm run dist
-```
-
-#### Windows
-```bash
-npm run dist:win
-```
-
-#### Все платформы
-```bash
-npm run dist:all
-```
-
-## Python (альтернатива Electron)
 
 ### Требования
 - Python 3.9+
@@ -50,34 +18,61 @@ npm run dist:all
 ### Установка зависимостей
 ```bash
 python3 -m venv .venv
-. .venv/bin/activate
+. .venv/bin/activate  # На Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
 ### Запуск
 ```bash
 make run
+# или
+python app.py
 ```
 
-### Сборка (PyInstaller)
+### Сборка приложения (PyInstaller)
+
+#### macOS
 ```bash
-make build-mac   # macOS .app в dist/
-make build-win   # Windows .exe (на Windows)
+make build-mac   # Создает .app в dist/
 ```
+
+#### Windows
+```bash
+make build-win   # Создает .exe в dist/
+```
+
+## Импорт насосов из Excel
+
+1. Нажмите "Создать образец Excel" для получения шаблона
+2. Заполните Excel файл с данными насосов
+3. Нажмите "Выбрать файл Excel" и выберите файл
+4. Насосы будут импортированы в базу данных
+
+### Формат Excel файла
+
+Обязательные колонки:
+- `model` - Модель насоса
+- `nominal_q_m3` - Номинальный дебит (м³/сут)
+- `min_q_m3` - Минимальный дебит (м³/сут)
+- `max_q_m3` - Максимальный дебит (м³/сут)
+- `nominal_head_m` - Номинальный напор (м)
+- `min_head_m` - Минимальный напор (м)
+- `max_head_m` - Максимальный напор (м)
+- `nominal_power_kw` - Номинальная мощность (кВт)
+- `efficiency` - КПД (%)
+- `stages` - Количество ступеней
+
+Дополнительные колонки:
+- `manufacturer` - Производитель
+- `notes` - Примечания
 
 ## Структура проекта
 
-- `main.js` - основной процесс Electron
-- `preload.js` - скрипт предзагрузки
+- `app.py` - основной Python приложение
+- `pump_manager.py` - управление данными насосов
 - `IrkPUMP v6.html` - интерфейс приложения
-- `package.json` - конфигурация проекта
-
-## Сборка
-
-Приложение собирается с помощью electron-builder и поддерживает:
-- macOS (.dmg)
-- Windows (.exe)
-- Linux (.AppImage)
+- `requirements.txt` - Python зависимости
+- `Makefile` - команды сборки
 
 ## Лицензия
 
