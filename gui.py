@@ -24,6 +24,7 @@ from PySide6.QtWidgets import (
 )
 
 from pump_manager import PumpManager
+from ui.design_tab import DesignTab
 
 
 class MainWindow(QMainWindow):
@@ -90,7 +91,7 @@ class MainWindow(QMainWindow):
         container = QWidget(self)
         layout = QVBoxLayout(container)
 
-        # Info row
+        # Top info row (catalog)
         info_row = QHBoxLayout()
         self.catalog_label = QLabel(f"Каталог: {self.pump_manager.catalog_dir}")
         self.count_label = QLabel("Насосов в базе: 0")
@@ -99,35 +100,8 @@ class MainWindow(QMainWindow):
         info_row.addWidget(self.count_label)
         layout.addLayout(info_row)
 
-        # Table of pumps
-        self.table = QTableWidget(self)
-        self.table.setColumnCount(8)
-        self.table.setHorizontalHeaderLabels([
-            "Модель",
-            "Дебит мин",
-            "Дебит ном",
-            "Дебит макс",
-            "Напор ном",
-            "Мощн, кВт",
-            "КПД, %",
-            "Ступени",
-        ])
-        self.table.horizontalHeader().setStretchLastSection(True)
-        layout.addWidget(self.table)
-
-        # Actions row
-        actions_row = QHBoxLayout()
-        import_btn = QPushButton("Импорт из Excel...")
-        import_btn.clicked.connect(self._action_import_excel)
-        sample_btn = QPushButton("Создать образец Excel")
-        sample_btn.clicked.connect(self._action_create_sample)
-        export_btn = QPushButton("Экспорт каталога в TXT")
-        export_btn.clicked.connect(self._action_export_text)
-        actions_row.addWidget(import_btn)
-        actions_row.addWidget(sample_btn)
-        actions_row.addWidget(export_btn)
-        actions_row.addStretch(1)
-        layout.addLayout(actions_row)
+        # Design tab area
+        layout.addWidget(DesignTab())
 
         self.setCentralWidget(container)
 
@@ -182,20 +156,6 @@ class MainWindow(QMainWindow):
 
     def _refresh_table(self) -> None:
         pumps = self.pump_manager.get_pumps()
-        self.table.setRowCount(len(pumps))
-        for row_idx, pump in enumerate(pumps):
-            def set_cell(col: int, value: str) -> None:
-                self.table.setItem(row_idx, col, QTableWidgetItem(value))
-
-            set_cell(0, str(pump.get("model", "")))
-            set_cell(1, f"{pump.get('min_q_m3', 0):.1f}")
-            set_cell(2, f"{pump.get('nominal_q_m3', 0):.1f}")
-            set_cell(3, f"{pump.get('max_q_m3', 0):.1f}")
-            set_cell(4, f"{pump.get('nominal_head_m', 0):.1f}")
-            set_cell(5, f"{pump.get('nominal_power_kw', 0):.1f}")
-            set_cell(6, f"{pump.get('efficiency', 0):.1f}")
-            set_cell(7, str(pump.get('stages', 0)))
-
         self.count_label.setText(f"Насосов в базе: {len(pumps)}")
 
 
