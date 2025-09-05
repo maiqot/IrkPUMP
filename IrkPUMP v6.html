@@ -176,6 +176,40 @@
             gap: 10px;
             flex-wrap: wrap;
         }
+        .catalog-files {
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 10px;
+            background-color: var(--input-bg);
+        }
+        .catalog-file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .catalog-file-item:last-child {
+            border-bottom: none;
+        }
+        .file-name {
+            font-family: monospace;
+            color: var(--text-color);
+        }
+        .file-import-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+        .file-import-btn:hover {
+            background: var(--primary-dark);
+        }
         button {
             padding: 12px 20px;
             font-size: 1rem;
@@ -768,6 +802,12 @@
                     </div>
                     <h4><i class="fas fa-file-excel icon-inline"></i> 4. Управление насосами</h4>
                     <div class="input-group">
+                        <label>Каталог насосов:</label>
+                        <div class="catalog-info">
+                            <small id="catalogPath" style="color: var(--text-secondary);"></small>
+                        </div>
+                    </div>
+                    <div class="input-group">
                         <label>Импорт насосов из Excel:</label>
                         <div class="file-input-container">
                             <input type="file" id="excelFileInput" accept=".xlsx,.xls" style="display: none;">
@@ -779,6 +819,12 @@
                             </button>
                         </div>
                         <div id="excelImportStatus" class="status-message" style="display: none;"></div>
+                    </div>
+                    <div class="input-group">
+                        <label>Файлы в каталоге:</label>
+                        <div id="catalogFiles" class="catalog-files">
+                            <small>Загрузка...</small>
+                        </div>
                     </div>
                     <div class="btn-group">
                         <button onclick="runFullCalculation()"><i class="fas fa-play icon-inline"></i> <b>ЗАПУСТИТЬ РАСЧЕТ</b></button>
@@ -1555,6 +1601,7 @@
             try {
                 const samplePath = pywebview.api.createSampleExcel();
                 showStatus('success', `Образец Excel файла создан: ${samplePath}`);
+                loadCatalogFiles(); // Refresh catalog files list
             } catch (error) {
                 showStatus('error', `Ошибка создания образца: ${error.message}`);
             }
@@ -1572,6 +1619,55 @@
             }, 5000);
         }
 
+        function loadCatalogFiles() {
+            try {
+                const catalogPath = pywebview.api.getCatalogPath();
+                document.getElementById('catalogPath').textContent = `Путь: ${catalogPath}`;
+                
+                const files = pywebview.api.getCatalogFiles();
+                const catalogDiv = document.getElementById('catalogFiles');
+                
+                if (files.length === 0) {
+                    catalogDiv.innerHTML = '<small>Каталог пуст. Создайте образец Excel файла.</small>';
+                    return;
+                }
+                
+                let html = '';
+                files.forEach(fileName => {
+                    html += `
+                        <div class="catalog-file-item">
+                            <span class="file-name">${fileName}</span>
+                            <button class="file-import-btn" onclick="importFromCatalog('${fileName}')">
+                                Импорт
+                            </button>
+                        </div>
+                    `;
+                });
+                catalogDiv.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading catalog files:', error);
+                document.getElementById('catalogFiles').innerHTML = '<small>Ошибка загрузки каталога</small>';
+            }
+        }
+
+        function importFromCatalog(fileName) {
+            try {
+                showStatus('info', `Импорт из каталога: ${fileName}`);
+                const result = pywebview.api.importPumpsFromExcel(fileName);
+                
+                if (result.success) {
+                    showStatus('success', `Успешно импортировано ${result.imported} насосов из ${fileName}`);
+                    if (result.errors.length > 0) {
+                        console.warn('Import warnings:', result.errors);
+                    }
+                } else {
+                    showStatus('error', `Ошибка импорта: ${result.errors.join(', ')}`);
+                }
+            } catch (error) {
+                showStatus('error', `Ошибка импорта: ${error.message}`);
+            }
+        }
+
         // Handle file input change
         document.getElementById('excelFileInput').addEventListener('change', function(event) {
             const file = event.target.files[0];
@@ -1584,24 +1680,16 @@
             try {
                 showStatus('info', 'Импорт насосов...');
                 
-                // Read file as array buffer
-                const arrayBuffer = await file.arrayBuffer();
-                
-                // Convert to base64 for transmission
-                const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-                
-                // Create temporary file path
-                const tempPath = `temp_${Date.now()}.xlsx`;
-                
-                // For now, we'll use a simple approach - save to temp file
-                // In a real implementation, you'd handle the file upload properly
-                const result = await pywebview.api.importPumpsFromExcel(file.name);
+                // For now, we'll use the file name directly
+                // In a real implementation, you'd save the file to catalog first
+                const result = pywebview.api.importPumpsFromExcel(file.name);
                 
                 if (result.success) {
                     showStatus('success', `Успешно импортировано ${result.imported} насосов`);
                     if (result.errors.length > 0) {
                         console.warn('Import warnings:', result.errors);
                     }
+                    loadCatalogFiles(); // Refresh catalog files list
                 } else {
                     showStatus('error', `Ошибка импорта: ${result.errors.join(', ')}`);
                 }
@@ -1609,6 +1697,11 @@
                 showStatus('error', `Ошибка импорта: ${error.message}`);
             }
         }
+
+        // Load catalog files on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCatalogFiles();
+        });
 
         // --- ОСНОВНАЯ ФУНКЦИЯ РАСЧЕТА ---
         async function runFullCalculation() {

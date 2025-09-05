@@ -21,6 +21,8 @@ class PumpManager:
             data_dir: Directory to store pump data files. Defaults to current directory.
         """
         self.data_dir = data_dir or Path(__file__).parent
+        self.catalog_dir = self.data_dir / "catalog"
+        self.catalog_dir.mkdir(exist_ok=True)
         self.pumps_file = self.data_dir / "pumps.json"
         self.pumps: List[Dict[str, Any]] = []
         self.load_pumps()
@@ -63,12 +65,30 @@ class PumpManager:
         - notes: Additional notes
         
         Args:
-            excel_path: Path to Excel file
+            excel_path: Path to Excel file (can be relative to catalog dir or absolute)
             
         Returns:
             Dict with import results: {'success': bool, 'imported': int, 'errors': List[str]}
         """
         try:
+            # Handle both absolute and relative paths
+            if not Path(excel_path).is_absolute():
+                # Try catalog directory first, then current directory
+                catalog_path = self.catalog_dir / excel_path
+                if catalog_path.exists():
+                    excel_path = str(catalog_path)
+                else:
+                    # Try current directory
+                    current_path = self.data_dir / excel_path
+                    if current_path.exists():
+                        excel_path = str(current_path)
+                    else:
+                        return {
+                            'success': False,
+                            'imported': 0,
+                            'errors': [f"File not found: {excel_path}"]
+                        }
+            
             # Read Excel file
             df = pd.read_excel(excel_path, engine='openpyxl')
             
@@ -215,6 +235,27 @@ def create_sample_excel(file_path: str) -> None:
     
     df = pd.DataFrame(sample_data)
     df.to_excel(file_path, index=False, engine='openpyxl')
+
+
+def get_catalog_files(catalog_dir: Path) -> List[str]:
+    """Get list of Excel files in catalog directory.
+    
+    Args:
+        catalog_dir: Path to catalog directory
+        
+    Returns:
+        List of Excel file names
+    """
+    if not catalog_dir.exists():
+        return []
+    
+    excel_files = []
+    for file_path in catalog_dir.glob("*.xlsx"):
+        excel_files.append(file_path.name)
+    for file_path in catalog_dir.glob("*.xls"):
+        excel_files.append(file_path.name)
+    
+    return sorted(excel_files)
 
 
 if __name__ == "__main__":

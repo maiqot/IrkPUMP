@@ -29,15 +29,26 @@ def create_api() -> dict:
     
     def create_sample_excel() -> str:
         """Create sample Excel file and return path."""
-        sample_path = Path(__file__).parent / "sample_pumps.xlsx"
+        sample_path = pump_manager.catalog_dir / "sample_pumps.xlsx"
         from pump_manager import create_sample_excel
         create_sample_excel(str(sample_path))
         return str(sample_path)
     
+    def get_catalog_files() -> list:
+        """Get list of Excel files in catalog directory."""
+        from pump_manager import get_catalog_files
+        return get_catalog_files(pump_manager.catalog_dir)
+    
+    def get_catalog_path() -> str:
+        """Get catalog directory path."""
+        return str(pump_manager.catalog_dir)
+    
     return {
         'importPumpsFromExcel': import_pumps_from_excel,
         'getPumps': get_pumps,
-        'createSampleExcel': create_sample_excel
+        'createSampleExcel': create_sample_excel,
+        'getCatalogFiles': get_catalog_files,
+        'getCatalogPath': get_catalog_path
     }
 
 
