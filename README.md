@@ -15,7 +15,7 @@
 - Node.js 16+ 
 - npm
 
-### Установка зависимостей
+### Установка зависимостей (Node)
 ```bash
 npm install
 ```
@@ -40,6 +40,29 @@ npm run dist:win
 #### Все платформы
 ```bash
 npm run dist:all
+```
+
+## Python (альтернатива Electron)
+
+### Требования
+- Python 3.9+
+
+### Установка зависимостей
+```bash
+python3 -m venv .venv
+. .venv/bin/activate
+pip install -r requirements.txt
+```
+
+### Запуск
+```bash
+make run
+```
+
+### Сборка (PyInstaller)
+```bash
+make build-mac   # macOS .app в dist/
+make build-win   # Windows .exe (на Windows)
 ```
 
 ## Структура проекта

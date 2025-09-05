@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "irkpump"
+version = "1.0.0"
+description = "IrkPUMP - Python wrapper"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+  "pywebview>=5.2",
+]
+
+[project.scripts]
+irkpump = "app:main"
+
+
