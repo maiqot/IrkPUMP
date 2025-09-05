@@ -25,6 +25,7 @@ from PySide6.QtWidgets import (
 
 from pump_manager import PumpManager
 from ui.design_tab import DesignTab
+from ui.catalog_tab import CatalogTab
 
 
 class MainWindow(QMainWindow):
@@ -100,8 +101,13 @@ class MainWindow(QMainWindow):
         info_row.addWidget(self.count_label)
         layout.addLayout(info_row)
 
-        # Design tab area
-        layout.addWidget(DesignTab())
+        # Tabs container
+        tabs_container = QWidget()
+        tabs_layout = QVBoxLayout(tabs_container)
+        # For now, stack two key sections vertically to keep simple
+        tabs_layout.addWidget(DesignTab())
+        tabs_layout.addWidget(CatalogTab(self.pump_manager))
+        layout.addWidget(tabs_container)
 
         self.setCentralWidget(container)
 
