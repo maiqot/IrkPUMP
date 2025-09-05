@@ -805,6 +805,7 @@
                         <label>Каталог насосов:</label>
                         <div class="catalog-info">
                             <small id="catalogPath" style="color: var(--text-secondary);"></small>
+                            <small id="pumpCount" style="color: var(--primary-color); font-weight: bold;"></small>
                         </div>
                     </div>
                     <div class="input-group">
@@ -816,6 +817,9 @@
                             </button>
                             <button class="btn btn-info" onclick="createSampleExcel()">
                                 <i class="fas fa-download icon-inline"></i> Создать образец Excel
+                            </button>
+                            <button class="btn btn-warning" onclick="clearAllPumps()">
+                                <i class="fas fa-trash icon-inline"></i> Очистить все
                             </button>
                         </div>
                         <div id="excelImportStatus" class="status-message" style="display: none;"></div>
@@ -1624,6 +1628,10 @@
                 const catalogPath = pywebview.api.getCatalogPath();
                 document.getElementById('catalogPath').textContent = `Путь: ${catalogPath}`;
                 
+                // Update pump count
+                const pumpCount = pywebview.api.getPumpCount();
+                document.getElementById('pumpCount').textContent = `Насосов в базе: ${pumpCount}`;
+                
                 const files = pywebview.api.getCatalogFiles();
                 const catalogDiv = document.getElementById('catalogFiles');
                 
@@ -1660,11 +1668,24 @@
                     if (result.errors.length > 0) {
                         console.warn('Import warnings:', result.errors);
                     }
+                    loadCatalogFiles(); // Refresh pump count
                 } else {
                     showStatus('error', `Ошибка импорта: ${result.errors.join(', ')}`);
                 }
             } catch (error) {
                 showStatus('error', `Ошибка импорта: ${error.message}`);
+            }
+        }
+
+        function clearAllPumps() {
+            if (confirm('Вы уверены, что хотите удалить все насосы из базы данных?')) {
+                try {
+                    pywebview.api.clearPumps();
+                    showStatus('success', 'Все насосы удалены из базы данных');
+                    loadCatalogFiles(); // Refresh pump count
+                } catch (error) {
+                    showStatus('error', `Ошибка очистки: ${error.message}`);
+                }
             }
         }
 
@@ -1689,7 +1710,7 @@
                     if (result.errors.length > 0) {
                         console.warn('Import warnings:', result.errors);
                     }
-                    loadCatalogFiles(); // Refresh catalog files list
+                    loadCatalogFiles(); // Refresh catalog files list and pump count
                 } else {
                     showStatus('error', `Ошибка импорта: ${result.errors.join(', ')}`);
                 }

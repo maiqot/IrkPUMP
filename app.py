@@ -27,6 +27,23 @@ def create_api() -> dict:
         """Get all pumps."""
         return pump_manager.get_pumps()
     
+    def get_pump_count() -> int:
+        """Get total number of pumps."""
+        return pump_manager.get_pump_count()
+    
+    def search_pumps(query: str) -> list:
+        """Search pumps by model or manufacturer."""
+        return pump_manager.search_pumps(query)
+    
+    def clear_pumps() -> bool:
+        """Clear all pumps."""
+        pump_manager.clear_pumps()
+        return True
+    
+    def export_to_text(output_path: str) -> bool:
+        """Export pumps to text file."""
+        return pump_manager.export_to_text(output_path)
+    
     def create_sample_excel() -> str:
         """Create sample Excel file and return path."""
         sample_path = pump_manager.catalog_dir / "sample_pumps.xlsx"
@@ -46,6 +63,10 @@ def create_api() -> dict:
     return {
         'importPumpsFromExcel': import_pumps_from_excel,
         'getPumps': get_pumps,
+        'getPumpCount': get_pump_count,
+        'searchPumps': search_pumps,
+        'clearPumps': clear_pumps,
+        'exportToText': export_to_text,
         'createSampleExcel': create_sample_excel,
         'getCatalogFiles': get_catalog_files,
         'getCatalogPath': get_catalog_path

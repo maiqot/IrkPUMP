@@ -1,9 +1,9 @@
 """
 Pump management module for IrkPUMP.
-Handles pump data import from Excel and JSON operations.
+Handles pump data import from Excel and data persistence.
 """
 
-import json
+import pickle
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -23,27 +23,27 @@ class PumpManager:
         self.data_dir = data_dir or Path(__file__).parent
         self.catalog_dir = self.data_dir / "catalog"
         self.catalog_dir.mkdir(exist_ok=True)
-        self.pumps_file = self.data_dir / "pumps.json"
+        self.pumps_file = self.data_dir / "pumps.pkl"
         self.pumps: List[Dict[str, Any]] = []
         self.load_pumps()
     
     def load_pumps(self) -> None:
-        """Load pumps from JSON file."""
+        """Load pumps from pickle file."""
         if self.pumps_file.exists():
             try:
-                with open(self.pumps_file, 'r', encoding='utf-8') as f:
-                    self.pumps = json.load(f)
-            except (json.JSONDecodeError, IOError) as e:
+                with open(self.pumps_file, 'rb') as f:
+                    self.pumps = pickle.load(f)
+            except (pickle.PickleError, IOError) as e:
                 print(f"Error loading pumps: {e}", file=sys.stderr)
                 self.pumps = []
         else:
             self.pumps = []
     
     def save_pumps(self) -> None:
-        """Save pumps to JSON file."""
+        """Save pumps to pickle file."""
         try:
-            with open(self.pumps_file, 'w', encoding='utf-8') as f:
-                json.dump(self.pumps, f, ensure_ascii=False, indent=2)
+            with open(self.pumps_file, 'wb') as f:
+                pickle.dump(self.pumps, f)
         except IOError as e:
             print(f"Error saving pumps: {e}", file=sys.stderr)
     
@@ -210,6 +210,73 @@ class PumpManager:
         except Exception as e:
             print(f"Error exporting to Excel: {e}", file=sys.stderr)
             return False
+    
+    def export_to_text(self, output_path: str) -> bool:
+        """Export pumps to human-readable text file.
+        
+        Args:
+            output_path: Path for output text file
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            if not self.pumps:
+                return False
+            
+            with open(output_path, 'w', encoding='utf-8') as f:
+                f.write("IrkPUMP - Каталог насосов\n")
+                f.write("=" * 50 + "\n\n")
+                
+                for i, pump in enumerate(self.pumps, 1):
+                    f.write(f"Насос #{i}: {pump.get('model', 'N/A')}\n")
+                    f.write(f"  Производитель: {pump.get('manufacturer', 'N/A')}\n")
+                    f.write(f"  Дебит: {pump.get('min_q_m3', 0):.1f} - {pump.get('max_q_m3', 0):.1f} м³/сут\n")
+                    f.write(f"  Напор: {pump.get('min_head_m', 0):.1f} - {pump.get('max_head_m', 0):.1f} м\n")
+                    f.write(f"  Мощность: {pump.get('nominal_power_kw', 0):.1f} кВт\n")
+                    f.write(f"  КПД: {pump.get('efficiency', 0):.1f}%\n")
+                    f.write(f"  Ступени: {pump.get('stages', 0)}\n")
+                    if pump.get('notes'):
+                        f.write(f"  Примечания: {pump['notes']}\n")
+                    f.write("\n")
+            
+            return True
+        except Exception as e:
+            print(f"Error exporting to text: {e}", file=sys.stderr)
+            return False
+    
+    def get_pump_count(self) -> int:
+        """Get total number of pumps."""
+        return len(self.pumps)
+    
+    def clear_pumps(self) -> None:
+        """Clear all pumps from memory and file."""
+        self.pumps = []
+        self.save_pumps()
+    
+    def search_pumps(self, query: str) -> List[Dict[str, Any]]:
+        """Search pumps by model or manufacturer.
+        
+        Args:
+            query: Search query (case-insensitive)
+            
+        Returns:
+            List of matching pumps
+        """
+        if not query:
+            return self.pumps.copy()
+        
+        query_lower = query.lower()
+        matches = []
+        
+        for pump in self.pumps:
+            model = pump.get('model', '').lower()
+            manufacturer = pump.get('manufacturer', '').lower()
+            
+            if query_lower in model or query_lower in manufacturer:
+                matches.append(pump)
+        
+        return matches
 
 
 def create_sample_excel(file_path: str) -> None:
