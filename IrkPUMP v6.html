@@ -1690,10 +1690,10 @@
         }
 
         // Handle file input change
-        document.getElementById('excelFileInput').addEventListener('change', function(event) {
+        document.getElementById('excelFileInput').addEventListener('change', async function(event) {
             const file = event.target.files[0];
             if (file) {
-                importPumpsFromExcel(file);
+                await importPumpsFromExcel(file);
             }
         });
 
@@ -1701,9 +1701,14 @@
             try {
                 showStatus('info', 'Импорт насосов...');
                 
-                // For now, we'll use the file name directly
-                // In a real implementation, you'd save the file to catalog first
-                const result = pywebview.api.importPumpsFromExcel(file.name);
+                // pywebview API methods are async; ensure availability
+                if (!window.pywebview || !pywebview.api || !pywebview.api.importPumpsFromExcel) {
+                    throw new Error('pywebview API is not ready');
+                }
+
+                // NOTE: For now we pass only the file name; place your .xlsx into catalog/ manually
+                // Future: implement saving selected file into catalog directory via native dialog
+                const result = await pywebview.api.importPumpsFromExcel(file.name);
                 
                 if (result.success) {
                     showStatus('success', `Успешно импортировано ${result.imported} насосов`);
@@ -1720,7 +1725,7 @@
         }
 
         // Load catalog files on page load
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('pywebviewready', function() {
             loadCatalogFiles();
         });
 
@@ -1778,6 +1783,19 @@
             });
 
             const tempBottom = inputs.surfaceTemperature + (inputs.pumpDepth / 100) * inputs.tempGradient;
+
+            // Call Python engine (non-blocking for now). We'll progressively move logic to Python
+            try {
+                if (window.pywebview && pywebview.api && pywebview.api.runFullCalculation) {
+                    const payload = {
+                        reservoirPressure: inputs.reservoirPressure,
+                        productivityIndex: inputs.productivityIndex,
+                        bubblePointPressure: inputs.bubblePointPressure,
+                        targetFlowRate: inputs.targetFlowRate
+                    };
+                    pywebview.api.runFullCalculation(payload).then(r => console.log('Python engine ok', r)).catch(e => console.warn('Python engine error', e));
+                }
+            } catch (e) { console.warn(e); }
             lastInputs = inputs;
 
             try {

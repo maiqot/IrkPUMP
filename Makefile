@@ -12,10 +12,10 @@ run: deps
 	. .venv/bin/activate && $(PYTHON) gui.py
 
 build-mac: deps
-	. .venv/bin/activate && pyinstaller --noconsole --name IrkPUMP --add-data "IrkPUMP v6.html:." gui.py
+	. .venv/bin/activate && pyinstaller --noconsole --name IrkPUMP gui.py
 
 build-win: deps
-	. .venv/bin/activate && pyinstaller --noconsole --name IrkPUMP --add-data "IrkPUMP v6.html;." gui.py
+	. .venv/bin/activate && pyinstaller --noconsole --name IrkPUMP gui.py
 
 clean:
 	rm -rf build dist *.spec .venv

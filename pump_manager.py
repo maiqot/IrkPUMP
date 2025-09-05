@@ -91,6 +91,73 @@ class PumpManager:
             
             # Read Excel file
             df = pd.read_excel(excel_path, engine='openpyxl')
+
+            # Normalize column headers: strip, lowercase, collapse spaces/commas
+            def norm(col: str) -> str:
+                return (
+                    str(col)
+                    .strip()
+                    .replace('\n', ' ')
+                    .replace('\t', ' ')
+                    .replace(',', '.')
+                    .lower()
+                )
+
+            original_columns = list(df.columns)
+            normalized = {col: norm(col) for col in original_columns}
+
+            # Map Russian headers to internal English schema
+            ru_to_en: Dict[str, str] = {
+                # Basic
+                'модель': 'model',
+                'модель насоса': 'model',
+                'производитель': 'manufacturer',
+                'заметки': 'notes',
+                'примечания': 'notes',
+                # Flow (variants)
+                'q ном, м3/сут': 'nominal_q_m3',
+                'q ном, м³/сут': 'nominal_q_m3',
+                'qnom, м3/сут': 'nominal_q_m3',
+                'q_nom, м3/сут': 'nominal_q_m3',
+                'дебит номинальный': 'nominal_q_m3',
+                'q min, м3/сут': 'min_q_m3',
+                'q min, м³/сут': 'min_q_m3',
+                'qmax, м3/сут': 'max_q_m3',
+                'q max, м3/сут': 'max_q_m3',
+                'q max, м³/сут': 'max_q_m3',
+                'дебит мин': 'min_q_m3',
+                'дебит макс': 'max_q_m3',
+                # Head
+                'напор/ступень, м': 'head_per_stage_m',
+                'напор/ступень': 'head_per_stage_m',
+                'напор, м': 'nominal_head_m',
+                'напор ном, м': 'nominal_head_m',
+                'напор мин, м': 'min_head_m',
+                'напор макс, м': 'max_head_m',
+                # Power / efficiency / stages
+                'макс. мощн., квт': 'nominal_power_kw',
+                'мощность, квт': 'nominal_power_kw',
+                'кпд (0..1)': 'efficiency',
+                'кпд': 'efficiency',
+                'макс. ступеней': 'stages',
+                'ступени': 'stages',
+            }
+
+            rename_map: Dict[str, str] = {}
+            for col, n in normalized.items():
+                # direct english name already
+                if n in {
+                    'model', 'nominal_q_m3', 'min_q_m3', 'max_q_m3',
+                    'nominal_head_m', 'min_head_m', 'max_head_m',
+                    'nominal_power_kw', 'efficiency', 'stages', 'manufacturer', 'notes'
+                }:
+                    rename_map[col] = n
+                    continue
+                if n in ru_to_en:
+                    rename_map[col] = ru_to_en[n]
+
+            if rename_map:
+                df = df.rename(columns=rename_map)
             
             # Required columns
             required_cols = [
@@ -99,6 +166,18 @@ class PumpManager:
                 'nominal_power_kw', 'efficiency', 'stages'
             ]
             
+            # If head min/max are missing but we have head_per_stage_m and stages, synthesize
+            if 'head_per_stage_m' in df.columns and 'stages' in df.columns:
+                try:
+                    per_stage = pd.to_numeric(df['head_per_stage_m'], errors='coerce')
+                    stages_series = pd.to_numeric(df['stages'], errors='coerce').fillna(1)
+                    total_head = per_stage * stages_series
+                    df['nominal_head_m'] = df.get('nominal_head_m', total_head)
+                    df['min_head_m'] = df.get('min_head_m', total_head * 0.6)
+                    df['max_head_m'] = df.get('max_head_m', total_head)
+                except Exception:
+                    pass
+
             # Check for required columns
             missing_cols = [col for col in required_cols if col not in df.columns]
             if missing_cols:
@@ -129,6 +208,10 @@ class PumpManager:
                         'manufacturer': str(row.get('manufacturer', '')).strip(),
                         'notes': str(row.get('notes', '')).strip()
                     }
+
+                    # Convert efficiency 0..1 to percent if needed
+                    if pump['efficiency'] <= 1:
+                        pump['efficiency'] *= 100.0
                     
                     # Validate data
                     if pump['nominal_q_m3'] <= 0 or pump['min_q_m3'] <= 0 or pump['max_q_m3'] <= 0:

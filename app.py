@@ -4,6 +4,7 @@ from pathlib import Path
 import webview
 
 from pump_manager import PumpManager
+from calc_engine import run_calculation
 
 
 def get_app_title() -> str:
@@ -15,66 +16,60 @@ def get_html_uri() -> str:
     return html_path.resolve().as_uri()
 
 
-def create_api() -> dict:
-    """Create API object for JavaScript bridge."""
-    pump_manager = PumpManager()
-    
-    def import_pumps_from_excel(file_path: str) -> dict:
-        """Import pumps from Excel file."""
-        return pump_manager.import_from_excel(file_path)
-    
-    def get_pumps() -> list:
-        """Get all pumps."""
-        return pump_manager.get_pumps()
-    
-    def get_pump_count() -> int:
-        """Get total number of pumps."""
-        return pump_manager.get_pump_count()
-    
-    def search_pumps(query: str) -> list:
-        """Search pumps by model or manufacturer."""
-        return pump_manager.search_pumps(query)
-    
-    def clear_pumps() -> bool:
-        """Clear all pumps."""
-        pump_manager.clear_pumps()
+class Api:
+    """API exposed to the webview as window.pywebview.api"""
+
+    def __init__(self) -> None:
+        self.pump_manager = PumpManager()
+
+    # Data accessors
+    def importPumpsFromExcel(self, file_path: str) -> dict:  # noqa: N802 (pywebview expects camelCase)
+        return self.pump_manager.import_from_excel(file_path)
+
+    def getPumps(self) -> list:  # noqa: N802
+        return self.pump_manager.get_pumps()
+
+    def getPumpCount(self) -> int:  # noqa: N802
+        return self.pump_manager.get_pump_count()
+
+    def searchPumps(self, query: str) -> list:  # noqa: N802
+        return self.pump_manager.search_pumps(query)
+
+    def clearPumps(self) -> bool:  # noqa: N802
+        self.pump_manager.clear_pumps()
         return True
-    
-    def export_to_text(output_path: str) -> bool:
-        """Export pumps to text file."""
-        return pump_manager.export_to_text(output_path)
-    
-    def create_sample_excel() -> str:
-        """Create sample Excel file and return path."""
-        sample_path = pump_manager.catalog_dir / "sample_pumps.xlsx"
+
+    def exportToText(self, output_path: str) -> bool:  # noqa: N802
+        return self.pump_manager.export_to_text(output_path)
+
+    # Catalog helpers
+    def createSampleExcel(self) -> str:  # noqa: N802
         from pump_manager import create_sample_excel
+
+        sample_path = self.pump_manager.catalog_dir / "sample_pumps.xlsx"
         create_sample_excel(str(sample_path))
         return str(sample_path)
-    
-    def get_catalog_files() -> list:
-        """Get list of Excel files in catalog directory."""
+
+    def getCatalogFiles(self) -> list:  # noqa: N802
         from pump_manager import get_catalog_files
-        return get_catalog_files(pump_manager.catalog_dir)
-    
-    def get_catalog_path() -> str:
-        """Get catalog directory path."""
-        return str(pump_manager.catalog_dir)
-    
-    return {
-        'importPumpsFromExcel': import_pumps_from_excel,
-        'getPumps': get_pumps,
-        'getPumpCount': get_pump_count,
-        'searchPumps': search_pumps,
-        'clearPumps': clear_pumps,
-        'exportToText': export_to_text,
-        'createSampleExcel': create_sample_excel,
-        'getCatalogFiles': get_catalog_files,
-        'getCatalogPath': get_catalog_path
-    }
+
+        return get_catalog_files(self.pump_manager.catalog_dir)
+
+    def getCatalogPath(self) -> str:  # noqa: N802
+        return str(self.pump_manager.catalog_dir)
+
+    # Calculation entrypoint
+    def runFullCalculation(self, params: dict) -> dict:  # noqa: N802
+        result = run_calculation(params)
+        return {
+            'ok': result.ok,
+            'message': result.message,
+            'echo': result.echo,
+        }
 
 
 def main() -> None:
-    api = create_api()
+    api = Api()
     window = webview.create_window(
         get_app_title(), 
         url=get_html_uri(),
