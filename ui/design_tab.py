@@ -253,7 +253,7 @@ class DesignTab(QWidget):
         """Запуск начального расчёта с данными по умолчанию"""
         # Небольшая задержка чтобы интерфейс успел отрисоваться
         from PySide6.QtCore import QTimer
-        QTimer.singleShot(100, self.on_calc)
+        QTimer.singleShot(500, self.on_calc)
 
     def _spin(self, layout: QFormLayout, label: str, val: float, step: float, mn: float = 0.0, mx: float = 1e9) -> QDoubleSpinBox:
         w = QDoubleSpinBox()
@@ -285,13 +285,19 @@ class DesignTab(QWidget):
 
     def on_calc(self) -> None:
         self.progress.setValue(10)
+        self.status.setText("Выполняется расчёт...")
+        
         params = self._collect()
         out = run_full_calc(params)
-        self.progress.setValue(70)
+        
+        self.progress.setValue(50)
         self.chart.draw_pump(out.get("curve_q", []), out.get("curve_h", []), out.get("work_q"), out.get("work_h"))
+        
+        self.progress.setValue(80)
         self.results.setText(
             f"<b>TDH:</b> {out['tdh_m']:.1f} м | <b>PIP:</b> {out['pip_atm']:.1f} атм | <b>Газ, φ:</b> {out['void_fraction']:.1f}%"
         )
+        
         self.status.setText("Готово")
         self.progress.setValue(100)
 

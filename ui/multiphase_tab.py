@@ -258,6 +258,14 @@ class MultiphaseTab(QWidget):
         main_layout_final.setContentsMargins(0, 0, 0, 0)
         main_layout_final.addWidget(scroll_area)
         
+        # Автоматически запускаем расчёт при инициализации
+        self._run_initial_calculation()
+        
+    def _run_initial_calculation(self):
+        """Запуск начального расчёта с данными по умолчанию"""
+        from PySide6.QtCore import QTimer
+        QTimer.singleShot(500, self._on_calculate)
+        
     def _on_calculate(self):
         """Расчёт многофазного потока по методу Beggs-Brill"""
         self.progress.setValue(10)
