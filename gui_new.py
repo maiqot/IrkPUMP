@@ -36,6 +36,9 @@ from ui.multiphase_tab import MultiphaseTab
 from ui.cavitation_tab import CavitationTab
 from ui.motor_tab import MotorTab
 from ui.forecast_tab import ForecastTab
+from ui.calculation_tab import CalculationTab
+from ui.pump_selection_tab import PumpSelectionTab
+from ui.results_tab import ResultsTab
 
 
 class ModernCard(QFrame):
@@ -494,6 +497,9 @@ class MainWindow(QMainWindow):
         
         # Создание вкладок
         self.design_tab = DesignTab()
+        self.calculation_tab = CalculationTab()
+        self.pump_selection_tab = PumpSelectionTab()
+        self.results_tab = ResultsTab()
         self.multiphase_tab = MultiphaseTab()
         self.cavitation_tab = CavitationTab()
         self.motor_tab = MotorTab()
@@ -501,7 +507,10 @@ class MainWindow(QMainWindow):
         self.catalog_tab = CatalogTab(self.pump_manager)
         
         # Добавление вкладок с иконками
-        tabs.addTab(self.design_tab, "⚙️ Расчет")
+        tabs.addTab(self.design_tab, "📝 Ввод данных")
+        tabs.addTab(self.calculation_tab, "⚙️ Расчет")
+        tabs.addTab(self.pump_selection_tab, "🔧 Подбор насоса")
+        tabs.addTab(self.results_tab, "📊 Результат")
         tabs.addTab(self.multiphase_tab, "🌊 Многофазный поток")
         tabs.addTab(self.cavitation_tab, "⚠️ Кавитация")
         tabs.addTab(self.motor_tab, "⚡ Двигатель")

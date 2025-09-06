@@ -104,37 +104,41 @@ class DesignTab(QWidget):
                 border-radius: 8px;
                 margin-top: 10px;
                 padding-top: 10px;
+                background: white;
             }
             QGroupBox::title {
                 subcontrol-origin: margin;
                 left: 10px;
                 padding: 0 5px 0 5px;
                 color: #1976d2;
+                font-size: 14px;
             }
         """)
         reservoir_form = QFormLayout(reservoir_group)
+        reservoir_form.setSpacing(8)
         
-        self.reservoirPressure = self._spin(reservoir_form, "Pr, атм:", 89.6, 0.1)
-        self.productivityIndex = self._spin(reservoir_form, "J, м³/сут/атм:", 2.238, 0.001)
-        self.bubblePointPressure = self._spin(reservoir_form, "Pb, атм:", 89.6, 0.1)
-        self.gor = self._spin(reservoir_form, "GOR, м³/м³:", 251.7, 0.1)
-        self.waterCut = self._spin(reservoir_form, "Обводн., %:", 52.7, 0.1, 0, 100)
-        self.liquidDensity = self._spin(reservoir_form, "ρж, кг/м³:", 1016, 1)
-        self.bo = self._spin(reservoir_form, "Bo:", 1.64, 0.01)
-        self.viscosity = self._spin(reservoir_form, "Вязк., cПз:", 0.44, 0.01)
-        self.gasSG = self._spin(reservoir_form, "Плотн. газа, отн.:", 0.85, 0.01)
+        self.reservoirPressure = self._spin(reservoir_form, "Пластовое давление (Pr), атм:", 89.6, 0.1)
+        self.productivityIndex = self._spin(reservoir_form, "Коэфф. продуктивности (J), м³/сут/атм:", 2.238, 0.001)
+        self.bubblePointPressure = self._spin(reservoir_form, "Давление насыщения (Pb), атм:", 89.6, 0.1)
+        self.gor = self._spin(reservoir_form, "Газосодержание (GOR), м³/м³:", 251.7, 0.1)
+        self.waterCut = self._spin(reservoir_form, "Обводненность (Fw), %:", 52.7, 0.1, 0, 100)
+        self.liquidDensity = self._spin(reservoir_form, "Плотность жидкости, кг/м³:", 1016, 1)
+        self.bo = self._spin(reservoir_form, "Объемный коэфф. нефти (Bo):", 1.64, 0.01)
+        self.viscosity = self._spin(reservoir_form, "Вязкость жидкости, сПз:", 0.44, 0.01)
+        self.gasSG = self._spin(reservoir_form, "Плотность газа (относит.):", 0.85, 0.01)
         
         # Группа параметров скважины
         well_group = QGroupBox("2. Параметры скважины")
         well_group.setStyleSheet(reservoir_group.styleSheet())
         well_form = QFormLayout(well_group)
+        well_form.setSpacing(8)
         
-        self.tubingId = self._spin(well_form, "ID НКТ, мм:", 62, 1)
-        self.pumpDepth = self._spin(well_form, "Глубина, м:", 2630, 1)
-        self.thp = self._spin(well_form, "Pустья, атм:", 25, 0.1)
-        self.surfaceT = self._spin(well_form, "T устья, °C:", 20, 0.1)
-        self.gradT = self._spin(well_form, "Гр. T, °C/100м:", 3.0, 0.1)
-        self.targetQ = self._spin(well_form, "Qпроект, м³/сут:", 80, 1)
+        self.tubingId = self._spin(well_form, "Внутренний диаметр НКТ, мм:", 62, 1)
+        self.pumpDepth = self._spin(well_form, "Глубина спуска насоса (по вертикали), м:", 2630, 1)
+        self.thp = self._spin(well_form, "Устьевое давление, атм:", 25, 0.1)
+        self.surfaceT = self._spin(well_form, "Температура на устье, °С:", 20, 0.1)
+        self.gradT = self._spin(well_form, "Градиент температуры, °С/100м:", 3.0, 0.1)
+        self.targetQ = self._spin(well_form, "Проектный дебит, м³/сут:", 80, 1)
 
         # Кнопки
         buttons_row = QHBoxLayout()
@@ -261,7 +265,32 @@ class DesignTab(QWidget):
         w.setRange(mn, mx)
         w.setSingleStep(step)
         w.setValue(val)
-        layout.addRow(label, w)
+        w.setStyleSheet("""
+            QDoubleSpinBox {
+                background: white;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                padding: 6px 8px;
+                font-size: 12px;
+                min-height: 20px;
+            }
+            QDoubleSpinBox:focus {
+                border: 2px solid #1976d2;
+            }
+        """)
+        
+        # Создаем лейбл с правильным стилем
+        label_widget = QLabel(label)
+        label_widget.setStyleSheet("""
+            QLabel {
+                color: #333;
+                font-size: 12px;
+                font-weight: normal;
+                padding: 2px;
+            }
+        """)
+        
+        layout.addRow(label_widget, w)
         return w
 
     def _collect(self) -> Dict:
