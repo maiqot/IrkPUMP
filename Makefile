@@ -9,13 +9,13 @@ deps: venv
 	. .venv/bin/activate && pip install -U pip && pip install -r requirements.txt
 
 run: deps
-	. .venv/bin/activate && $(PYTHON) gui.py
+	. .venv/bin/activate && $(PYTHON) gui_new.py
 
 build-mac: deps
-	. .venv/bin/activate && pyinstaller --noconsole --name IrkPUMP gui.py
+	. .venv/bin/activate && pyinstaller --noconsole --name IrkPUMP gui_new.py
 
 build-win: deps
-	. .venv/bin/activate && pyinstaller --noconsole --name IrkPUMP gui.py
+	. .venv/bin/activate && pyinstaller --noconsole --name IrkPUMP gui_new.py
 
 clean:
 	rm -rf build dist *.spec .venv
