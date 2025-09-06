@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QFormLayout, 
     QLabel, QDoubleSpinBox, QPushButton, QGroupBox,
-    QTextEdit, QProgressBar
+    QTextEdit, QProgressBar, QScrollArea
 )
 from PySide6.QtCore import Qt
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
@@ -15,7 +15,11 @@ class MultiphaseTab(QWidget):
         self._setup_ui()
         
     def _setup_ui(self):
-        layout = QVBoxLayout(self)
+        # Главный контейнер с прокруткой
+        main_widget = QWidget()
+        main_widget.setMinimumSize(1200, 600)
+        
+        layout = QVBoxLayout(main_widget)
         layout.setContentsMargins(20, 20, 20, 20)
         layout.setSpacing(15)
         
@@ -222,6 +226,37 @@ class MultiphaseTab(QWidget):
         main_layout.addWidget(left_widget, 1)
         main_layout.addWidget(right_widget, 2)
         layout.addLayout(main_layout)
+        
+        # Добавляем скроллинг
+        scroll_area = QScrollArea()
+        scroll_area.setWidget(main_widget)
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        scroll_area.setStyleSheet("""
+            QScrollArea {
+                border: none;
+                background: transparent;
+            }
+            QScrollBar:vertical {
+                background: #f0f0f0;
+                width: 12px;
+                border-radius: 6px;
+            }
+            QScrollBar::handle:vertical {
+                background: #c0c0c0;
+                border-radius: 6px;
+                min-height: 20px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background: #a0a0a0;
+            }
+        """)
+        
+        # Устанавливаем скролл как основной layout
+        main_layout_final = QVBoxLayout(self)
+        main_layout_final.setContentsMargins(0, 0, 0, 0)
+        main_layout_final.addWidget(scroll_area)
         
     def _on_calculate(self):
         """Расчёт многофазного потока по методу Beggs-Brill"""

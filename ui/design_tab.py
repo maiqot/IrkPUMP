@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QGroupBox,
     QProgressBar,
+    QScrollArea,
 )
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
@@ -47,9 +48,44 @@ class DesignTab(QWidget):
         super().__init__()
         self.setMinimumSize(1200, 600)
         
-        root = QHBoxLayout(self)
+        # Главный контейнер с прокруткой
+        main_widget = QWidget()
+        main_widget.setMinimumSize(1200, 600)
+        
+        root = QHBoxLayout(main_widget)
         root.setContentsMargins(20, 20, 20, 20)
         root.setSpacing(20)
+        
+        # Добавляем скроллинг
+        scroll_area = QScrollArea()
+        scroll_area.setWidget(main_widget)
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        scroll_area.setStyleSheet("""
+            QScrollArea {
+                border: none;
+                background: transparent;
+            }
+            QScrollBar:vertical {
+                background: #f0f0f0;
+                width: 12px;
+                border-radius: 6px;
+            }
+            QScrollBar::handle:vertical {
+                background: #c0c0c0;
+                border-radius: 6px;
+                min-height: 20px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background: #a0a0a0;
+            }
+        """)
+        
+        # Устанавливаем скролл как основной layout
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.addWidget(scroll_area)
 
         # Left controls - фиксированная ширина
         left_widget = QWidget()
@@ -209,6 +245,15 @@ class DesignTab(QWidget):
         root.addWidget(right_widget)
 
         self.btn_calc.clicked.connect(self.on_calc)
+        
+        # Автоматически запускаем расчёт при инициализации
+        self._run_initial_calculation()
+
+    def _run_initial_calculation(self):
+        """Запуск начального расчёта с данными по умолчанию"""
+        # Небольшая задержка чтобы интерфейс успел отрисоваться
+        from PySide6.QtCore import QTimer
+        QTimer.singleShot(100, self.on_calc)
 
     def _spin(self, layout: QFormLayout, label: str, val: float, step: float, mn: float = 0.0, mx: float = 1e9) -> QDoubleSpinBox:
         w = QDoubleSpinBox()

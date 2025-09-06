@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
     QMenuBar,
     QMessageBox,
     QPushButton,
+    QScrollArea,
     QStatusBar,
     QTabWidget,
     QTableWidget,
@@ -26,7 +27,6 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
     QFrame,
-    QScrollArea,
 )
 
 from pump_manager import PumpManager
@@ -327,9 +327,8 @@ class MainWindow(QMainWindow):
         progress = self._create_progress_bar()
         main_layout.addWidget(progress)
         
-        # Основной контент с фиксированной высотой
+        # Основной контент с прокруткой
         content_widget = QWidget()
-        content_widget.setMinimumHeight(600)
         content_widget.setStyleSheet("""
             QWidget {
                 background: white;
@@ -346,12 +345,37 @@ class MainWindow(QMainWindow):
         info_row = self._create_info_row()
         content_layout.addLayout(info_row)
         
-        # Вкладки с фиксированной высотой
+        # Вкладки
         self.tabs = self._create_tabs()
-        self.tabs.setMinimumHeight(500)
         content_layout.addWidget(self.tabs)
         
-        main_layout.addWidget(content_widget)
+        # Добавляем скроллинг
+        scroll_area = QScrollArea()
+        scroll_area.setWidget(content_widget)
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        scroll_area.setStyleSheet("""
+            QScrollArea {
+                border: none;
+                background: transparent;
+            }
+            QScrollBar:vertical {
+                background: #f0f0f0;
+                width: 12px;
+                border-radius: 6px;
+            }
+            QScrollBar::handle:vertical {
+                background: #c0c0c0;
+                border-radius: 6px;
+                min-height: 20px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background: #a0a0a0;
+            }
+        """)
+        
+        main_layout.addWidget(scroll_area)
         self.setCentralWidget(main_widget)
 
     def _create_header(self):
