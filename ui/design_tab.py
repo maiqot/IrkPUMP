@@ -89,11 +89,11 @@ class DesignTab(QWidget):
 
         # Left controls - фиксированная ширина
         left_widget = QWidget()
-        left_widget.setFixedWidth(350)
-        left_widget.setMaximumWidth(350)
+        left_widget.setFixedWidth(450)
+        left_widget.setMaximumWidth(450)
         left_layout = QVBoxLayout(left_widget)
-        left_layout.setContentsMargins(0, 0, 0, 0)
-        left_layout.setSpacing(15)
+        left_layout.setContentsMargins(10, 10, 10, 10)
+        left_layout.setSpacing(10)
         
         # Группа параметров пласта
         reservoir_group = QGroupBox("1. Параметры пласта и флюида")
@@ -117,15 +117,15 @@ class DesignTab(QWidget):
         reservoir_form = QFormLayout(reservoir_group)
         reservoir_form.setSpacing(8)
         
-        self.reservoirPressure = self._spin(reservoir_form, "Пластовое давление (Pr), атм:", 89.6, 0.1)
-        self.productivityIndex = self._spin(reservoir_form, "Коэфф. продуктивности (J), м³/сут/атм:", 2.238, 0.001)
-        self.bubblePointPressure = self._spin(reservoir_form, "Давление насыщения (Pb), атм:", 89.6, 0.1)
-        self.gor = self._spin(reservoir_form, "Газосодержание (GOR), м³/м³:", 251.7, 0.1)
-        self.waterCut = self._spin(reservoir_form, "Обводненность (Fw), %:", 52.7, 0.1, 0, 100)
-        self.liquidDensity = self._spin(reservoir_form, "Плотность жидкости, кг/м³:", 1016, 1)
-        self.bo = self._spin(reservoir_form, "Объемный коэфф. нефти (Bo):", 1.64, 0.01)
-        self.viscosity = self._spin(reservoir_form, "Вязкость жидкости, сПз:", 0.44, 0.01)
-        self.gasSG = self._spin(reservoir_form, "Плотность газа (относит.):", 0.85, 0.01)
+        self.reservoirPressure = self._spin(reservoir_form, "Pr, атм:", 89.6, 0.1)
+        self.productivityIndex = self._spin(reservoir_form, "J, м³/сут/атм:", 2.238, 0.001)
+        self.bubblePointPressure = self._spin(reservoir_form, "Pb, атм:", 89.6, 0.1)
+        self.gor = self._spin(reservoir_form, "GOR, м³/м³:", 251.7, 0.1)
+        self.waterCut = self._spin(reservoir_form, "Обводн., %:", 52.7, 0.1, 0, 100)
+        self.liquidDensity = self._spin(reservoir_form, "ρж, кг/м³:", 1016, 1)
+        self.bo = self._spin(reservoir_form, "Bo:", 1.64, 0.01)
+        self.viscosity = self._spin(reservoir_form, "Вязк., сПз:", 0.44, 0.01)
+        self.gasSG = self._spin(reservoir_form, "Плотн. газа, отн.:", 0.85, 0.01)
         
         # Группа параметров скважины
         well_group = QGroupBox("2. Параметры скважины")
@@ -133,12 +133,12 @@ class DesignTab(QWidget):
         well_form = QFormLayout(well_group)
         well_form.setSpacing(8)
         
-        self.tubingId = self._spin(well_form, "Внутренний диаметр НКТ, мм:", 62, 1)
-        self.pumpDepth = self._spin(well_form, "Глубина спуска насоса (по вертикали), м:", 2630, 1)
-        self.thp = self._spin(well_form, "Устьевое давление, атм:", 25, 0.1)
-        self.surfaceT = self._spin(well_form, "Температура на устье, °С:", 20, 0.1)
-        self.gradT = self._spin(well_form, "Градиент температуры, °С/100м:", 3.0, 0.1)
-        self.targetQ = self._spin(well_form, "Проектный дебит, м³/сут:", 80, 1)
+        self.tubingId = self._spin(well_form, "ID НКТ, мм:", 62, 1)
+        self.pumpDepth = self._spin(well_form, "Глубина, м:", 2630, 1)
+        self.thp = self._spin(well_form, "Pустья, атм:", 25, 0.1)
+        self.surfaceT = self._spin(well_form, "T устья, °С:", 20, 0.1)
+        self.gradT = self._spin(well_form, "Гр. T, °С/100м:", 3.0, 0.1)
+        self.targetQ = self._spin(well_form, "Qпроект, м³/сут:", 80, 1)
 
         # Кнопки
         buttons_row = QHBoxLayout()
@@ -188,10 +188,11 @@ class DesignTab(QWidget):
 
         # Right results - фиксированная ширина
         right_widget = QWidget()
-        right_widget.setMinimumWidth(800)
+        right_widget.setMinimumWidth(700)
+        right_widget.setMaximumWidth(700)
         right = QVBoxLayout(right_widget)
-        right.setContentsMargins(0, 0, 0, 0)
-        right.setSpacing(15)
+        right.setContentsMargins(10, 10, 10, 10)
+        right.setSpacing(10)
         
         # Статус и прогресс
         status_layout = QHBoxLayout()
@@ -270,9 +271,10 @@ class DesignTab(QWidget):
                 background: white;
                 border: 1px solid #ccc;
                 border-radius: 4px;
-                padding: 6px 8px;
-                font-size: 12px;
-                min-height: 20px;
+                padding: 8px 12px;
+                font-size: 13px;
+                min-height: 25px;
+                min-width: 120px;
             }
             QDoubleSpinBox:focus {
                 border: 2px solid #1976d2;
@@ -284,9 +286,10 @@ class DesignTab(QWidget):
         label_widget.setStyleSheet("""
             QLabel {
                 color: #333;
-                font-size: 12px;
+                font-size: 13px;
                 font-weight: normal;
-                padding: 2px;
+                padding: 4px;
+                min-width: 100px;
             }
         """)
         

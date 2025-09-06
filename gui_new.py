@@ -217,8 +217,8 @@ class MainWindow(QMainWindow):
     def _setup_ui(self) -> None:
         """Настройка пользовательского интерфейса"""
         self.setWindowTitle("Инженерный калькулятор ЭЦН (Версия 4.0)")
-        self.setMinimumSize(1200, 800)
-        self.resize(1400, 900)
+        self.setMinimumSize(1400, 900)
+        self.resize(1600, 1000)
         
         # Установка светлой темы
         self.setStyleSheet("""

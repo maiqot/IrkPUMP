@@ -11,6 +11,9 @@ deps: venv
 run: deps
 	. .venv/bin/activate && $(PYTHON) gui_new.py
 
+run-python: deps
+	. .venv/bin/activate && $(PYTHON) irkpump_python.py
+
 build-mac: deps
 	. .venv/bin/activate && pyinstaller --noconsole --name IrkPUMP gui_new.py
 
