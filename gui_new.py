@@ -312,8 +312,9 @@ class MainWindow(QMainWindow):
 
     def _setup_central(self) -> None:
         """Настройка центральной области"""
-        # Главный контейнер
+        # Главный контейнер с фиксированными размерами
         main_widget = QWidget()
+        main_widget.setMinimumSize(1200, 800)
         main_layout = QVBoxLayout(main_widget)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
@@ -326,8 +327,9 @@ class MainWindow(QMainWindow):
         progress = self._create_progress_bar()
         main_layout.addWidget(progress)
         
-        # Основной контент
+        # Основной контент с фиксированной высотой
         content_widget = QWidget()
+        content_widget.setMinimumHeight(600)
         content_widget.setStyleSheet("""
             QWidget {
                 background: white;
@@ -338,14 +340,15 @@ class MainWindow(QMainWindow):
         """)
         content_layout = QVBoxLayout(content_widget)
         content_layout.setContentsMargins(20, 20, 20, 20)
-        content_layout.setSpacing(20)
+        content_layout.setSpacing(15)
         
         # Информационная строка
         info_row = self._create_info_row()
         content_layout.addLayout(info_row)
         
-        # Вкладки
+        # Вкладки с фиксированной высотой
         self.tabs = self._create_tabs()
+        self.tabs.setMinimumHeight(500)
         content_layout.addWidget(self.tabs)
         
         main_layout.addWidget(content_widget)

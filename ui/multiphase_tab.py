@@ -16,6 +16,7 @@ class MultiphaseTab(QWidget):
         
     def _setup_ui(self):
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 20, 20, 20)
         layout.setSpacing(15)
         
         # Заголовок
@@ -34,11 +35,15 @@ class MultiphaseTab(QWidget):
         
         # Основной контент в две колонки
         main_layout = QHBoxLayout()
+        main_layout.setSpacing(20)
         
         # Левая колонка - параметры
         left_widget = QWidget()
+        left_widget.setFixedWidth(400)
+        left_widget.setMaximumWidth(400)
         left_layout = QVBoxLayout(left_widget)
-        left_layout.setSpacing(10)
+        left_layout.setContentsMargins(0, 0, 0, 0)
+        left_layout.setSpacing(15)
         
         # Группа параметров потока
         flow_group = QGroupBox("Параметры потока")
@@ -143,8 +148,10 @@ class MultiphaseTab(QWidget):
         
         # Правая колонка - результаты
         right_widget = QWidget()
+        right_widget.setMinimumWidth(800)
         right_layout = QVBoxLayout(right_widget)
-        right_layout.setSpacing(10)
+        right_layout.setContentsMargins(0, 0, 0, 0)
+        right_layout.setSpacing(15)
         
         # Прогресс
         self.progress = QProgressBar()
@@ -195,15 +202,17 @@ class MultiphaseTab(QWidget):
         """)
         
         # График
-        self.chart = FigureCanvasQTAgg(Figure(figsize=(6, 4)))
-        self.chart.figure.patch.set_facecolor('#2a2a2a')
+        self.chart = FigureCanvasQTAgg(Figure(figsize=(8, 5)))
+        self.chart.setMinimumSize(600, 400)
+        self.chart.setMaximumSize(800, 500)
+        self.chart.figure.patch.set_facecolor('#ffffff')
         self.ax = self.chart.figure.add_subplot(111)
-        self.ax.set_facecolor('#2a2a2a')
-        self.ax.tick_params(colors='#e0e0e0')
-        self.ax.spines['bottom'].set_color('#555')
-        self.ax.spines['top'].set_color('#555')
-        self.ax.spines['right'].set_color('#555')
-        self.ax.spines['left'].set_color('#555')
+        self.ax.set_facecolor('#ffffff')
+        self.ax.tick_params(colors='#333333')
+        self.ax.spines['bottom'].set_color('#e0e0e0')
+        self.ax.spines['top'].set_color('#e0e0e0')
+        self.ax.spines['right'].set_color('#e0e0e0')
+        self.ax.spines['left'].set_color('#e0e0e0')
         
         right_layout.addWidget(self.progress)
         right_layout.addWidget(self.status)

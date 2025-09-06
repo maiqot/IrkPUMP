@@ -22,9 +22,11 @@ from core.calc import run_full_calc
 
 class PumpChart(FigureCanvasQTAgg):
     def __init__(self) -> None:
-        fig = Figure(figsize=(6, 4), tight_layout=True)
+        fig = Figure(figsize=(8, 5), tight_layout=True)
         super().__init__(fig)
         self.ax = fig.add_subplot(111)
+        self.setMinimumSize(600, 400)
+        self.setMaximumSize(800, 500)
 
     def draw_pump(self, curve_q, curve_h, work_q, work_h) -> None:
         ax = self.ax
@@ -43,66 +45,168 @@ class PumpChart(FigureCanvasQTAgg):
 class DesignTab(QWidget):
     def __init__(self) -> None:
         super().__init__()
-
+        self.setMinimumSize(1200, 600)
+        
         root = QHBoxLayout(self)
+        root.setContentsMargins(20, 20, 20, 20)
+        root.setSpacing(20)
 
-        # Left controls
-        left_layout = QFormLayout()
-        self.reservoirPressure = self._spin(left_layout, "Pr, атм:", 89.6, 0.1)
-        self.productivityIndex = self._spin(left_layout, "J, м³/сут/атм:", 2.238, 0.001)
-        self.bubblePointPressure = self._spin(left_layout, "Pb, атм:", 89.6, 0.1)
-        self.gor = self._spin(left_layout, "GOR, м³/м³:", 251.7, 0.1)
-        self.waterCut = self._spin(left_layout, "Обводн., %:", 52.7, 0.1, 0, 100)
-        self.liquidDensity = self._spin(left_layout, "ρж, кг/м³:", 1016, 1)
-        self.bo = self._spin(left_layout, "Bo:", 1.64, 0.01)
-        self.viscosity = self._spin(left_layout, "Вязк., cПз:", 0.44, 0.01)
-        self.gasSG = self._spin(left_layout, "Плотн. газа, отн.:", 0.85, 0.01)
-        self.tubingId = self._spin(left_layout, "ID НКТ, мм:", 62, 1)
-        self.pumpDepth = self._spin(left_layout, "Глубина, м:", 2630, 1)
-        self.thp = self._spin(left_layout, "Pустья, атм:", 25, 0.1)
-        self.surfaceT = self._spin(left_layout, "T устья, °C:", 20, 0.1)
-        self.gradT = self._spin(left_layout, "Гр. T, °C/100м:", 3.0, 0.1)
-        self.targetQ = self._spin(left_layout, "Qпроект, м³/сут:", 80, 1)
+        # Left controls - фиксированная ширина
+        left_widget = QWidget()
+        left_widget.setFixedWidth(350)
+        left_widget.setMaximumWidth(350)
+        left_layout = QVBoxLayout(left_widget)
+        left_layout.setContentsMargins(0, 0, 0, 0)
+        left_layout.setSpacing(15)
+        
+        # Группа параметров пласта
+        reservoir_group = QGroupBox("1. Параметры пласта и флюида")
+        reservoir_group.setStyleSheet("""
+            QGroupBox {
+                font-weight: bold;
+                border: 2px solid #e0e0e0;
+                border-radius: 8px;
+                margin-top: 10px;
+                padding-top: 10px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 5px 0 5px;
+                color: #1976d2;
+            }
+        """)
+        reservoir_form = QFormLayout(reservoir_group)
+        
+        self.reservoirPressure = self._spin(reservoir_form, "Pr, атм:", 89.6, 0.1)
+        self.productivityIndex = self._spin(reservoir_form, "J, м³/сут/атм:", 2.238, 0.001)
+        self.bubblePointPressure = self._spin(reservoir_form, "Pb, атм:", 89.6, 0.1)
+        self.gor = self._spin(reservoir_form, "GOR, м³/м³:", 251.7, 0.1)
+        self.waterCut = self._spin(reservoir_form, "Обводн., %:", 52.7, 0.1, 0, 100)
+        self.liquidDensity = self._spin(reservoir_form, "ρж, кг/м³:", 1016, 1)
+        self.bo = self._spin(reservoir_form, "Bo:", 1.64, 0.01)
+        self.viscosity = self._spin(reservoir_form, "Вязк., cПз:", 0.44, 0.01)
+        self.gasSG = self._spin(reservoir_form, "Плотн. газа, отн.:", 0.85, 0.01)
+        
+        # Группа параметров скважины
+        well_group = QGroupBox("2. Параметры скважины")
+        well_group.setStyleSheet(reservoir_group.styleSheet())
+        well_form = QFormLayout(well_group)
+        
+        self.tubingId = self._spin(well_form, "ID НКТ, мм:", 62, 1)
+        self.pumpDepth = self._spin(well_form, "Глубина, м:", 2630, 1)
+        self.thp = self._spin(well_form, "Pустья, атм:", 25, 0.1)
+        self.surfaceT = self._spin(well_form, "T устья, °C:", 20, 0.1)
+        self.gradT = self._spin(well_form, "Гр. T, °C/100м:", 3.0, 0.1)
+        self.targetQ = self._spin(well_form, "Qпроект, м³/сут:", 80, 1)
 
+        # Кнопки
         buttons_row = QHBoxLayout()
         self.btn_calc = QPushButton("ЗАПУСТИТЬ РАСЧЕТ")
+        self.btn_calc.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #4caf50, stop:1 #2e7d32);
+                color: white;
+                border: none;
+                padding: 12px 20px;
+                border-radius: 6px;
+                font-weight: bold;
+                font-size: 14px;
+            }
+            QPushButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #66bb6a, stop:1 #388e3c);
+            }
+        """)
         self.btn_export = QPushButton("ЭКСПОРТИРОВАТЬ")
+        self.btn_export.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #2196f3, stop:1 #1976d2);
+                color: white;
+                border: none;
+                padding: 12px 20px;
+                border-radius: 6px;
+                font-weight: bold;
+                font-size: 14px;
+            }
+            QPushButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #42a5f5, stop:1 #1565c0);
+            }
+        """)
         buttons_row.addWidget(self.btn_calc)
         buttons_row.addWidget(self.btn_export)
 
-        left_box = QVBoxLayout()
-        left_box.addLayout(left_layout)
-        left_box.addLayout(buttons_row)
+        left_layout.addWidget(reservoir_group)
+        left_layout.addWidget(well_group)
+        left_layout.addLayout(buttons_row)
+        left_layout.addStretch()
 
-        left_wrap = QWidget()
-        left_wrap.setLayout(left_box)
-        root.addWidget(left_wrap, 1)
+        root.addWidget(left_widget)
 
-        # Right results
-        right = QVBoxLayout()
+        # Right results - фиксированная ширина
+        right_widget = QWidget()
+        right_widget.setMinimumWidth(800)
+        right = QVBoxLayout(right_widget)
+        right.setContentsMargins(0, 0, 0, 0)
+        right.setSpacing(15)
+        
+        # Статус и прогресс
+        status_layout = QHBoxLayout()
         self.status = QLabel("Заполните поля и запустите расчет")
         self.status.setAlignment(Qt.AlignCenter)
+        self.status.setStyleSheet("""
+            QLabel {
+                color: #1976d2;
+                font-size: 14px;
+                padding: 10px;
+                background: #e3f2fd;
+                border-radius: 6px;
+                border: 1px solid #90caf9;
+            }
+        """)
         self.progress = QProgressBar()
         self.progress.setRange(0, 100)
+        self.progress.setStyleSheet("""
+            QProgressBar {
+                border: 2px solid #e0e0e0;
+                border-radius: 5px;
+                text-align: center;
+                background-color: #f5f5f5;
+            }
+            QProgressBar::chunk {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 #4caf50, stop:1 #2e7d32);
+                border-radius: 3px;
+            }
+        """)
+        status_layout.addWidget(self.status)
+        status_layout.addWidget(self.progress)
+        
+        # График
         self.chart = PumpChart()
+        
+        # Результаты
         self.results = QLabel("")
         self.results.setTextFormat(Qt.RichText)
-        self.results.setStyleSheet("QLabel { padding: 6px; border: 1px solid #333; border-radius: 4px; }")
+        self.results.setStyleSheet("""
+            QLabel { 
+                padding: 15px; 
+                border: 1px solid #e0e0e0; 
+                border-radius: 8px; 
+                background: #f9f9f9;
+                font-size: 12px;
+            }
+        """)
+        self.results.setMaximumHeight(100)
 
-        grp = QGroupBox("Шаг 3: Итоговый расчет и рабочая точка")
-        grp.setCheckable(True)
-        grp.setChecked(True)
-        grp_layout = QVBoxLayout(grp)
-        grp_layout.addWidget(self.chart)
-        grp_layout.addWidget(self.results)
+        right.addLayout(status_layout)
+        right.addWidget(self.chart)
+        right.addWidget(self.results)
 
-        right.addWidget(self.status)
-        right.addWidget(self.progress)
-        right.addWidget(grp)
-
-        right_wrap = QWidget()
-        right_wrap.setLayout(right)
-        root.addWidget(right_wrap, 2)
+        root.addWidget(right_widget)
 
         self.btn_calc.clicked.connect(self.on_calc)
 
