@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QPushButton,
     QStatusBar,
+    QTabWidget,
     QTableWidget,
     QTableWidgetItem,
     QToolBar,
@@ -26,6 +27,10 @@ from PySide6.QtWidgets import (
 from pump_manager import PumpManager
 from ui.design_tab import DesignTab
 from ui.catalog_tab import CatalogTab
+from ui.multiphase_tab import MultiphaseTab
+from ui.cavitation_tab import CavitationTab
+from ui.motor_tab import MotorTab
+from ui.forecast_tab import ForecastTab
 
 
 class MainWindow(QMainWindow):
@@ -102,12 +107,46 @@ class MainWindow(QMainWindow):
         layout.addLayout(info_row)
 
         # Tabs container
-        tabs_container = QWidget()
-        tabs_layout = QVBoxLayout(tabs_container)
-        # For now, stack two key sections vertically to keep simple
-        tabs_layout.addWidget(DesignTab())
-        tabs_layout.addWidget(CatalogTab(self.pump_manager))
-        layout.addWidget(tabs_container)
+        self.tabs = QTabWidget()
+        self.tabs.setStyleSheet("""
+            QTabWidget::pane {
+                border: 1px solid #555;
+                background-color: #2a2a2a;
+            }
+            QTabBar::tab {
+                background-color: #333;
+                color: #e0e0e0;
+                padding: 8px 16px;
+                margin-right: 2px;
+                border-top-left-radius: 4px;
+                border-top-right-radius: 4px;
+            }
+            QTabBar::tab:selected {
+                background-color: #90caf9;
+                color: #000;
+            }
+            QTabBar::tab:hover {
+                background-color: #555;
+            }
+        """)
+        
+        # Создание вкладок
+        self.design_tab = DesignTab()
+        self.multiphase_tab = MultiphaseTab()
+        self.cavitation_tab = CavitationTab()
+        self.motor_tab = MotorTab()
+        self.forecast_tab = ForecastTab()
+        self.catalog_tab = CatalogTab(self.pump_manager)
+        
+        # Добавление вкладок
+        self.tabs.addTab(self.design_tab, "Расчёт")
+        self.tabs.addTab(self.multiphase_tab, "Многофазный поток")
+        self.tabs.addTab(self.cavitation_tab, "Кавитация")
+        self.tabs.addTab(self.motor_tab, "Двигатель")
+        self.tabs.addTab(self.forecast_tab, "Прогноз")
+        self.tabs.addTab(self.catalog_tab, "Каталог")
+        
+        layout.addWidget(self.tabs)
 
         self.setCentralWidget(container)
 
